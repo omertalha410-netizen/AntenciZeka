@@ -4,14 +4,17 @@ import os
 
 app = Flask(__name__)
 
-# API anahtarı
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# API anahtarını al
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
 
-# HOCAM: İsmi en yalın haliyle yazıyoruz.
-SECILEN_MODEL = "gemini-1.5-flash"
+# HOCAM: Senin listeden seçtiğimiz, kotası en geniş olan model budur.
+# 404 hatası almamak için listedeki tam ismini kullanıyoruz.
+SECILEN_MODEL = "models/gemini-2.5-flash-lite" 
+
 model = genai.GenerativeModel(SECILEN_MODEL)
 
-SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
+SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. Kısa ve samimi cevaplar ver."
 
 @app.route("/")
 def index():
@@ -22,16 +25,17 @@ def mesaj():
     data = request.get_json()
     kullanici_mesaji = data.get("mesaj", "")
     try:
-        # Deneme yapıyoruz
+        # Mesajı gönderiyoruz
         response = model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
         return jsonify({"cevap": response.text})
     except Exception as e:
-        # HATA ALIRSAK: Google'ın senin için izin verdiği tüm isimleri buraya yazdıracak
+        # Eğer bu modelde de bir sorun olursa listedeki diğerine (2.0-flash-lite) geçer
         try:
-            mevcut_modeller = [m.name for m in genai.list_models()]
-            return jsonify({"cevap": f"Hocam bu model olmadı. Ama senin anahtarınla şu modelleri kullanabiliriz: {mevcut_modeller}. Hata mesajı ise: {str(e)}"})
+            yedek_model = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+            response = yedek_model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
+            return jsonify({"cevap": response.text})
         except:
-            return jsonify({"cevap": f"Hocam tamamen kilitlendik: {str(e)}"})
+            return jsonify({"cevap": f"Hocam bir sorun çıktı, ama çözüyoruz! Hata: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
