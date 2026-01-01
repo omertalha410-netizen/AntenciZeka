@@ -4,17 +4,17 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_gizli_anahtari_99"
+app.secret_key = "antenci_zekanin_gizli_anahtari_999"
 
 # --- GOOGLE AYARLARI ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
-PATRON_EMAIL = "omertalha410@gmail.com" # Mailini resimden gördüm, ekledim hocam!
+PATRON_EMAIL = "omertalha410@gmail.com"
 # ----------------------
 
-# Gemini Kurulumu - MODEL ADINI GÜNCELLEDİM
+# Gemini Kurulumu - MODEL İSMİNİ EN SADE HALİNE GETİRDİM
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash-latest")
+model = genai.GenerativeModel("gemini-1.5-flash") # En stabil isim budur
 
 # Google Login Kurulumu
 oauth = OAuth(app)
@@ -34,7 +34,7 @@ def index():
 
 @app.route('/login')
 def login():
-    # HATAYI ÖNLEMEK İÇİN ADRESİ ELLE SABİTLEDİK
+    # URL'yi manuel sabitleyerek hata riskini sıfırlıyoruz
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -69,11 +69,12 @@ def mesaj():
         return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile giriş yaparsan hakların yenilenir!"})
 
     try:
-        chat_prompt = f"Senin adın Antenci Zeka. Seni Medrese kodladı. Samimi ol. \nKullanıcı: {user_msg}"
-        response = model.generate_content(chat_prompt)
+        # Chat başlatma şeklini güncelledim
+        response = model.generate_content(f"Sen Antenci Zeka'sın. Medrese seni kodladı. Samimi ol. Kullanıcı: {user_msg}")
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
     except Exception as e:
         return jsonify({"cevap": f"Hata oluştu hocam: {str(e)}"})
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
