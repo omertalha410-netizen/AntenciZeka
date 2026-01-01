@@ -12,9 +12,9 @@ GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 # ----------------------
 
-# Gemini Kurulumu - MODEL İSMİNİ EN SADE HALİNE GETİRDİM
+# Gemini Kurulumu - MODEL İSMİNİ TAM YOLUYLA YAZDIK
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-1.5-flash") # En stabil isim budur
+model = genai.GenerativeModel("models/gemini-1.5-flash") # 404 HATASINI ÇÖZEN SATIR
 
 # Google Login Kurulumu
 oauth = OAuth(app)
@@ -34,7 +34,7 @@ def index():
 
 @app.route('/login')
 def login():
-    # URL'yi manuel sabitleyerek hata riskini sıfırlıyoruz
+    # Google giriş hatasını önlemek için adresi sabitledik
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -69,8 +69,8 @@ def mesaj():
         return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile giriş yaparsan hakların yenilenir!"})
 
     try:
-        # Chat başlatma şeklini güncelledim
-        response = model.generate_content(f"Sen Antenci Zeka'sın. Medrese seni kodladı. Samimi ol. Kullanıcı: {user_msg}")
+        # Mesaj gönderme formatını en sade hale getirdik
+        response = model.generate_content(user_msg)
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
     except Exception as e:
