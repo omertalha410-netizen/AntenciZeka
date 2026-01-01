@@ -4,11 +4,11 @@ import os
 
 app = Flask(__name__)
 
-# DİKKAT: Buraya o yeni aldığın AIza... ile başlayan anahtarı TIRNAK İÇİNE yapıştır
-# Örnek: genai.configure(api_key="AIzaSyA123...")
-genai.configure(api_key="AIzaSyDCLdoBxAhmfWRWG2HO2Kg8c8e3h97Qjz0")
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 2026'nın en güncel modeli:
+model = genai.GenerativeModel('gemini-3-flash')
 
 SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
 
@@ -25,7 +25,7 @@ def mesaj():
         response = model.generate_content(prompt)
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": f"Hocam hata hala burada: {str(e)}"})
+        return jsonify({"cevap": f"Hocam hata şu: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
