@@ -4,17 +4,19 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_yemini_v100_kesin"
+app.secret_key = "antenci_zeka_kesin_cozum_2026"
 
 # --- CONFIG ---
-# Render'daki Environment Variables kısmına yeni hesabın anahtarını ekle hocam
+# Yeni hesaptan aldığın anahtarı Render'da GEMINI_API_KEY olarak ekle hocam
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
+# Google Auth Bilgileri
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 
+# Google Login Kurulumu
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -32,6 +34,7 @@ def index():
 
 @app.route('/login')
 def login():
+    # URI Mismatch hatası için sabit adres
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -64,21 +67,20 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam senin dükkan kotan doldu ({limit})."})
+        return jsonify({"cevap": f"Hocam dükkan kotan doldu ({limit})."})
 
-    # --- MODEL ÇAĞIRMA (TEK VE EN SAĞLAM MODEL) ---
+    # --- MODEL ÇAĞIRMA (TEK VE GARANTİ MODEL) ---
     try:
-        # gemini-1.5-flash: Ücretsiz katmanda en stabil ve en geniş kotalı modeldir.
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # gemini-pro-latest: 2026'da kotaları en stabil olan modeldir.
+        model = genai.GenerativeModel('gemini-pro-latest')
         response = model.generate_content(user_msg)
         
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
 
     except Exception as e:
-        # Hata olursa detayı patrona (sana) göstersin
-        return jsonify({"cevap": f"Hocam yeni hesapta bile bir takılma oldu. Hata detayı: {str(e)}"})
+        # Hata olursa detayı patrona bildir
+        return jsonify({"cevap": f"Hocam Google hala direniyor. Detay: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
-
