@@ -4,16 +4,16 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_gizli_anahtari"
+app.secret_key = "antenci_zekanin_gizli_anahtari_99"
 
-# --- HOCAM GOOGLE'DAN ALDIĞIN KODLARI BURAYA YAPIŞTIR ---
-GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com" # Resimdeki kimlik
-GOOGLE_CLIENT_SECRET = "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" # Resimdeki sır
-PATRON_EMAIL = "senin-mail-adresin@gmail.com" # Kendi mailini buraya yaz hocam!
-# -------------------------------------------------------
+# --- GOOGLE AYARLARI ---
+GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
+PATRON_EMAIL = "omertalha410@gmail.com" # BURAYA KENDİ MAİLİNİ YAZ HOCAM!
+# ----------------------
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("models/gemini-2.5-flash-lite")
+model = genai.GenerativeModel("models/gemini-1.5-flash")
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -50,11 +50,11 @@ def logout():
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
-    msg = data.get("mesaj", "")
+    user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
-    if email == PATRON_EMAIL:"omertalha410@gmail.com"
-        limit = 9999
+    if email == PATRON_EMAIL:
+        limit = 999999
     elif email:
         limit = 80
     else:
@@ -63,14 +63,15 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": "Hocam kotan doldu! Gmail ile girersen 80 hak alırsın."})
+        return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile giriş yaparsan hakların yenilenir!"})
 
     try:
-        response = model.generate_content(f"Sen Antenci Zeka'sın. Samimi bir üslupla cevap ver. \n\nKullanıcı: {msg}")
+        chat_prompt = f"Senin adın Antenci Zeka. Seni Medrese kodladı. Samimi ol. \nKullanıcı: {user_msg}"
+        response = model.generate_content(chat_prompt)
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": f"Hata: {str(e)}"})
+        return jsonify({"cevap": f"Hata oluştu hocam: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
