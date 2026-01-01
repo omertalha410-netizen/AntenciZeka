@@ -4,17 +4,15 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_gizli_anahtari_v5"
+app.secret_key = "antenci_v6_kesin_cozum"
 
-# --- GOOGLE & GEMINI AYARLARI ---
+# --- AYARLAR ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 
-# Gemini'yi v1 sürümüne zorlayarak kuruyoruz
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-# Google Login Kurulumu
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -53,6 +51,7 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
+    # --- KOTA SİSTEMİ (BURASI AYNI) ---
     if email == PATRON_EMAIL:
         limit = 999999
     elif email:
@@ -65,21 +64,22 @@ def mesaj():
     if usage >= limit:
         return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
+    # --- HATA ÇÖZÜCÜ MESAJLAŞMA ---
     try:
-        # HATA BURADAYDI: Model ismini ve çağırma metodunu en temel v1 sürümüne çektik
+        # Önce en güncel modeli dene
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(user_msg)
-        
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
-    except Exception as e:
-        # Eğer hala hata verirse, model isminin başına 'models/' ekleyip tekrar dene
+    except Exception:
         try:
-            model_alt = genai.GenerativeModel('models/gemini-1.5-flash')
-            response_alt = model_alt.generate_content(user_msg)
-            return jsonify({"cevap": response_alt.text})
-        except:
-            return jsonify({"cevap": f"Hocam Google tarafında bir sorun var: {str(e)}"})
+            # Olmazsa eski/alternatif ismi dene
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content(user_msg)
+            user_quotas[email] = usage + 1
+            return jsonify({"cevap": response.text})
+        except Exception as e:
+            return jsonify({"cevap": f"Hocam Google hala inat ediyor. Hata: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
