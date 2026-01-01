@@ -4,12 +4,12 @@ import os
 
 app = Flask(__name__)
 
-# API anahtarını sistemden alıyoruz
+# Render'daki Environment Variables kısmından anahtarı çeker
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
-# En stabil model olan 'gemini-pro' kullanıyoruz
-model = genai.GenerativeModel('gemini-pro')
+# Yeni projelerle en iyi çalışan güncel model
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 SISTEM_MESAJI = (
     "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. "
@@ -31,8 +31,8 @@ def mesaj():
         response = model.generate_content(prompt)
         return jsonify({"cevap": response.text})
     except Exception as e:
-        # Hata olursa ne olduğunu tam görelim
-        return jsonify({"cevap": f"Hocam hala bir sorun var: {str(e)}"})
+        # Eğer yine hata verirse hatanın ne olduğunu ekrana yazar
+        return jsonify({"cevap": f"Hocam hata devam ediyor: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
