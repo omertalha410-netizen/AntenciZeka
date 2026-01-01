@@ -4,13 +4,14 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_v6_kesin_cozum"
+app.secret_key = "antenci_v7_final"
 
 # --- AYARLAR ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 
+# Gemini'yi en temel haliyle yapılandır
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 oauth = OAuth(app)
@@ -51,7 +52,7 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
-    # --- KOTA SİSTEMİ (BURASI AYNI) ---
+    # --- KOTA SİSTEMİ ---
     if email == PATRON_EMAIL:
         limit = 999999
     elif email:
@@ -64,22 +65,21 @@ def mesaj():
     if usage >= limit:
         return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
-    # --- HATA ÇÖZÜCÜ MESAJLAŞMA ---
     try:
-        # Önce en güncel modeli dene
+        # MODELİ BURADA ÇAĞIRIYORUZ - EN GÜNCEL METOD
+        # Not: models/ takısını kaldırdık ve en stabil versiyonu seçtik
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(user_msg)
-        user_quotas[email] = usage + 1
-        return jsonify({"cevap": response.text})
-    except Exception:
-        try:
-            # Olmazsa eski/alternatif ismi dene
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content(user_msg)
+        
+        if response.text:
             user_quotas[email] = usage + 1
             return jsonify({"cevap": response.text})
-        except Exception as e:
-            return jsonify({"cevap": f"Hocam Google hala inat ediyor. Hata: {str(e)}"})
+        else:
+            return jsonify({"cevap": "Hocam Google boş cevap döndü, tekrar dener misin?"})
+            
+    except Exception as e:
+        # Hata mesajını sadeleştirdik, kütüphane çakışmasını aşmak için manuel kontrol
+        return jsonify({"cevap": f"Sistem güncelleniyor hocam, lütfen 1 dakika sonra tekrar yazın. (Hata: {str(e)})"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
