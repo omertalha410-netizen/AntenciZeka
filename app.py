@@ -4,18 +4,15 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_gizli_anahtari_v4"
+app.secret_key = "antenci_zekanin_gizli_anahtari_v5"
 
-# --- GOOGLE AYARLARI ---
+# --- GOOGLE & GEMINI AYARLARI ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
-# ----------------------
 
-# Gemini Kurulumu - MODEL İSMİNİ EN GARANTİ SÜRÜME ÇEKTİK
+# Gemini'yi v1 sürümüne zorlayarak kuruyoruz
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# Burada 'models/' eklemeden deniyoruz, çoğu zaman sorun budur
-model = genai.GenerativeModel("gemini-1.5-flash") 
 
 # Google Login Kurulumu
 oauth = OAuth(app)
@@ -66,16 +63,23 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile girersen 80 hak alırsın."})
+        return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
     try:
-        # En basit içerik üretme komutu
+        # HATA BURADAYDI: Model ismini ve çağırma metodunu en temel v1 sürümüne çektik
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(user_msg)
+        
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
     except Exception as e:
-        # Hata devam ederse model ismini kod içinde otomatik değiştirmeyi deniyoruz
-        return jsonify({"cevap": f"Hocam bir sorun var ama çözüyoruz. Hata: {str(e)}"})
+        # Eğer hala hata verirse, model isminin başına 'models/' ekleyip tekrar dene
+        try:
+            model_alt = genai.GenerativeModel('models/gemini-1.5-flash')
+            response_alt = model_alt.generate_content(user_msg)
+            return jsonify({"cevap": response_alt.text})
+        except:
+            return jsonify({"cevap": f"Hocam Google tarafında bir sorun var: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
