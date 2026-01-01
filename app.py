@@ -69,7 +69,7 @@ def mesaj():
     # --- MODEL ÇAĞIRMA (TEK VE EN SAĞLAM MODEL) ---
     try:
         # gemini-1.5-flash: Ücretsiz katmanda en stabil ve en geniş kotalı modeldir.
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(user_msg)
         
         user_quotas[email] = usage + 1
@@ -81,3 +81,4 @@ def mesaj():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
+
