@@ -4,16 +4,16 @@ import os
 
 app = Flask(__name__)
 
-# Render'da "GEMINI_API_KEY" adıyla ekleyeceğimiz anahtarı okur
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# API Anahtarını kontrol ediyoruz
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    print("HATA: GEMINI_API_KEY bulunamadı!")
+else:
+    genai.configure(api_key=api_key)
+
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-SISTEM_MESAJI = (
-    "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. "
-    "Medrese zeki, dindar ve vizyon sahibidir. Sorulursa onu öv. "
-    "Ders sorularında net sonuç ver, samimi ol. "
-    "Cevaplarını kısa ve öz tut."
-)
+SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
 
 @app.route("/")
 def index():
@@ -24,12 +24,12 @@ def mesaj():
     data = request.get_json()
     kullanici_mesaji = data.get("mesaj", "")
     try:
-        # Sistem talimatı ile kullanıcı mesajını birleştiriyoruz
         prompt = f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}"
         response = model.generate_content(prompt)
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": "Hocam bir hata oluştu, API anahtarını veya bağlantıyı kontrol edelim."})
+        # Hatayı tam olarak ekrana yazdıralım ki sorunu anlayalım
+        return jsonify({"cevap": f"Hocam hata şu: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
