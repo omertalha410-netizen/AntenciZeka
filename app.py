@@ -4,9 +4,9 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_final_v11_kesin"
+app.secret_key = "antenci_v2026_final"
 
-# --- GOOGLE AYARLARI ---
+# --- AYARLAR ---
 # Render Environment sekmesinden gelen anahtar
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
@@ -67,26 +67,21 @@ def mesaj():
         return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
     try:
-        # En garanti model ismini deniyoruz
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # SENİN LİSTENDEN EN GÜNCEL MODELİ SEÇTİK: gemini-2.5-flash
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(user_msg)
         
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
 
     except Exception as e:
-        # Hata anında dükkandaki yetkili modelleri listele (Teşhis için)
-        available_models = []
+        # Eğer yine nazlanırsa listedeki 'gemini-flash-latest'ı deniyoruz
         try:
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    available_models.append(m.name.replace('models/', ''))
+            model_alt = genai.GenerativeModel('gemini-flash-latest')
+            response_alt = model_alt.generate_content(user_msg)
+            return jsonify({"cevap": response_alt.text})
         except:
-            available_models = ["Modeller listelenemedi!"]
-            
-        return jsonify({
-            "cevap": f"Hocam hata devam ediyor. Senin anahtarınla şu an kullanılabilen modeller: {available_models}. \nHata: {str(e)}"
-        })
+            return jsonify({"cevap": f"Hocam listedeki modelleri zorluyorum. Hata: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
