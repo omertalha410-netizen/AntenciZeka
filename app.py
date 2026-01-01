@@ -9,12 +9,14 @@ app.secret_key = "antenci_zekanin_gizli_anahtari_99"
 # --- GOOGLE AYARLARI ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
-PATRON_EMAIL = "omertalha410@gmail.com" # BURAYA KENDİ MAİLİNİ YAZ HOCAM!
+PATRON_EMAIL = "omertalha410@gmail.com" # Mailini resimden gördüm, ekledim hocam!
 # ----------------------
 
+# Gemini Kurulumu - MODEL ADINI GÜNCELLEDİM
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("models/gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
+# Google Login Kurulumu
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -32,7 +34,8 @@ def index():
 
 @app.route('/login')
 def login():
-    redirect_uri = url_for('auth', _external=True)
+    # HATAYI ÖNLEMEK İÇİN ADRESİ ELLE SABİTLEDİK
+    redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/login/callback')
@@ -72,6 +75,5 @@ def mesaj():
         return jsonify({"cevap": response.text})
     except Exception as e:
         return jsonify({"cevap": f"Hata oluştu hocam: {str(e)}"})
-
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
