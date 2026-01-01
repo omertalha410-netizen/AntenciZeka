@@ -8,33 +8,32 @@ app = Flask(__name__)
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
-def yuksek_kotalı_model_bul():
+def yuksek_kotali_model_sec():
     try:
-        modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        # Tüm modelleri alıyoruz
+        modeller = [m.name for m in genai.list_models()]
         
-        # 1. ÖNCELİK: 1500 mesaj kotalı 1.5-flash modelleri
+        # 1. STRATEJİ: Özellikle 1.5-flash ara (Çünkü kotası 1500)
+        # 2.5 olanları özellikle ES GEÇİYORUZ (Çünkü kotası 20)
         for m in modeller:
-            if "1.5-flash" in m:
+            if "1.5-flash" in m.lower():
                 return m
         
-        # 2. ÖNCELİK: Eğer o yoksa 1.0-pro (Eski ama sağlam kota)
+        # 2. STRATEJİ: Eğer 1.5 bulunamazsa, 1.0-pro dene
         for m in modeller:
-            if "pro" in m and "1.0" in m:
+            if "1.0-pro" in m.lower():
                 return m
-                
-        # 3. ÖNCELİK: Liste boş değilse ilk bulduğun çalışan modeli al
-        if modeller:
-            return modeller[0]
-            
+        
+        # 3. STRATEJİ: Hiçbiri yoksa en güvenli ismi yaz
         return "models/gemini-1.5-flash"
     except:
         return "models/gemini-1.5-flash"
 
-# Yüksek kotalı olanı seçiyoruz
-SECILEN_MODEL = yuksek_kotalı_model_bul()
+# Modelimizi kotalara göre seçtiriyoruz
+SECILEN_MODEL = yuksek_kotali_model_sec()
 model = genai.GenerativeModel(SECILEN_MODEL)
 
-SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
+SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. Kısa ve samimi cevaplar ver."
 
 @app.route("/")
 def index():
@@ -48,7 +47,8 @@ def mesaj():
         response = model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": f"Hocam şu modelde ({SECILEN_MODEL}) kota/hata sorunu var: {str(e)}"})
+        # Hata olsa bile hangi modelde olduğumuzu görelim
+        return jsonify({"cevap": f"Hocam ({SECILEN_MODEL}) modelinde hata: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
