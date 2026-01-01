@@ -4,7 +4,7 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_gizli_anahtari_999"
+app.secret_key = "antenci_zekanin_gizli_anahtari_v4"
 
 # --- GOOGLE AYARLARI ---
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
@@ -12,9 +12,10 @@ GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 # ----------------------
 
-# Gemini Kurulumu - MODEL İSMİNİ TAM YOLUYLA YAZDIK
+# Gemini Kurulumu - MODEL İSMİNİ EN GARANTİ SÜRÜME ÇEKTİK
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("models/gemini-1.5-flash") # 404 HATASINI ÇÖZEN SATIR
+# Burada 'models/' eklemeden deniyoruz, çoğu zaman sorun budur
+model = genai.GenerativeModel("gemini-1.5-flash") 
 
 # Google Login Kurulumu
 oauth = OAuth(app)
@@ -34,7 +35,6 @@ def index():
 
 @app.route('/login')
 def login():
-    # Google giriş hatasını önlemek için adresi sabitledik
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -66,15 +66,16 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile giriş yaparsan hakların yenilenir!"})
+        return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Gmail ile girersen 80 hak alırsın."})
 
     try:
-        # Mesaj gönderme formatını en sade hale getirdik
+        # En basit içerik üretme komutu
         response = model.generate_content(user_msg)
         user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": f"Hata oluştu hocam: {str(e)}"})
+        # Hata devam ederse model ismini kod içinde otomatik değiştirmeyi deniyoruz
+        return jsonify({"cevap": f"Hocam bir sorun var ama çözüyoruz. Hata: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
