@@ -8,32 +8,28 @@ app = Flask(__name__)
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
-def yuksek_kotali_model_sec():
+def kesin_calisan_modeli_getir():
     try:
-        # Tüm modelleri alıyoruz
-        modeller = [m.name for m in genai.list_models()]
+        # Google'ın senin için tanımladığı tüm modelleri tara
+        for m in genai.list_models():
+            # generateContent destekleyen ve kotalı olmayan (1.5 flash) önceliğimiz
+            if 'generateContent' in m.supported_generation_methods:
+                if "1.5-flash" in m.name:
+                    return m.name # Tam ismi (models/gemini-1.5-flash vb.) döndürür
         
-        # 1. STRATEJİ: Özellikle 1.5-flash ara (Çünkü kotası 1500)
-        # 2.5 olanları özellikle ES GEÇİYORUZ (Çünkü kotası 20)
-        for m in modeller:
-            if "1.5-flash" in m.lower():
-                return m
-        
-        # 2. STRATEJİ: Eğer 1.5 bulunamazsa, 1.0-pro dene
-        for m in modeller:
-            if "1.0-pro" in m.lower():
-                return m
-        
-        # 3. STRATEJİ: Hiçbiri yoksa en güvenli ismi yaz
-        return "models/gemini-1.5-flash"
+        # Eğer yukarıdaki bulunamazsa, çalışan ilk modeli döndür
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                return m.name
     except:
-        return "models/gemini-1.5-flash"
+        pass
+    return "models/gemini-pro" # En son çare
 
-# Modelimizi kotalara göre seçtiriyoruz
-SECILEN_MODEL = yuksek_kotali_model_sec()
-model = genai.GenerativeModel(SECILEN_MODEL)
+# Modeli tam ismiyle (ID) başlatıyoruz
+SECILEN_ID = kesin_calisan_modeli_getir()
+model = genai.GenerativeModel(model_name=SECILEN_ID)
 
-SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. Kısa ve samimi cevaplar ver."
+SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
 
 @app.route("/")
 def index():
@@ -44,11 +40,11 @@ def mesaj():
     data = request.get_json()
     kullanici_mesaji = data.get("mesaj", "")
     try:
+        # response = model.generate_content(...) yerine en temel haliyle çağırıyoruz
         response = model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
         return jsonify({"cevap": response.text})
     except Exception as e:
-        # Hata olsa bile hangi modelde olduğumuzu görelim
-        return jsonify({"cevap": f"Hocam ({SECILEN_MODEL}) modelinde hata: {str(e)}"})
+        return jsonify({"cevap": f"Hocam denenen ID ({SECILEN_ID}) hatası: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
