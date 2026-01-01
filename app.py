@@ -4,18 +4,16 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zeka_2026_final_v1"
+app.secret_key = "antenci_2026_super_stable_v1"
 
 # --- CONFIG ---
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
-# Google Auth Bilgileri
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
 
-# Google Login Kurulumu
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -33,8 +31,7 @@ def index():
 
 @app.route('/login')
 def login():
-    # Hata 400: redirect_uri_mismatch çözümü:
-    # Google Cloud Panelindeki URI ile birebir aynı olmalı
+    # Login hatasını engellemek için URI'yi sabitledik
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -56,7 +53,6 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
-    # --- KOTA MANTIĞI ---
     if email == PATRON_EMAIL:
         limit = 999999
     elif email:
@@ -67,12 +63,12 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam kotan doldu ({limit}). Lütfen giriş yap veya yarın gel."})
+        return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
-    # --- MODEL ÇAĞIRMA (Garantili Model) ---
+    # --- KESİN ÇÖZÜM: LITE MODEL ---
     try:
-        # gemini-2.0-flash: Ücretsiz katmanda en yüksek sınıra sahip modeldir.
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Lite model hem hızlıdır hem de ücretsiz kotası çok daha yüksektir
+        model = genai.GenerativeModel('gemini-2.0-flash-lite')
         response = model.generate_content(user_msg)
         
         user_quotas[email] = usage + 1
@@ -80,9 +76,13 @@ def mesaj():
 
     except Exception as e:
         error_msg = str(e)
-        if "429" in error_msg:
-            return jsonify({"cevap": "Hocam Google'ın ücretsiz kapasitesi şu an dolu, 1 dakika sonra dener misin?"})
-        return jsonify({"cevap": f"Hocam bir sorun çıktı ama halledeceğiz: {error_msg}"})
+        # Eğer lite bile dolarsa 'gemini-flash-latest' modeline pasla
+        try:
+            model_back = genai.GenerativeModel('gemini-flash-latest')
+            response_back = model_back.generate_content(user_msg)
+            return jsonify({"cevap": response_back.text})
+        except:
+            return jsonify({"cevap": f"Hocam Google kapasiteyi gerçekten zorluyor. 1 dakika sonra tekrar deneyelim. (Hata: {error_msg})"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
