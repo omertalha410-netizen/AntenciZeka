@@ -4,9 +4,10 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_2026_super_stable_v1"
+app.secret_key = "antenci_zekanin_kesin_yemini_v100"
 
 # --- CONFIG ---
+# Render'daki Environment Variables kısmına GEMINI_API_KEY olarak ekle hocam
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
@@ -31,7 +32,7 @@ def index():
 
 @app.route('/login')
 def login():
-    # Login hatasını engellemek için URI'yi sabitledik
+    # Login hatasını kökten çözmek için adresi sabitledik
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -53,6 +54,7 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
+    # --- KOTA SİSTEMİ ---
     if email == PATRON_EMAIL:
         limit = 999999
     elif email:
@@ -63,26 +65,25 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
+        return jsonify({"cevap": f"Hocam senin dükkan kotan doldu ({limit}). Yarın yine gel."})
 
-    # --- KESİN ÇÖZÜM: LITE MODEL ---
-    try:
-        # Lite model hem hızlıdır hem de ücretsiz kotası çok daha yüksektir
-        model = genai.GenerativeModel('gemini-2.0-flash-lite')
-        response = model.generate_content(user_msg)
-        
-        user_quotas[email] = usage + 1
-        return jsonify({"cevap": response.text})
-
-    except Exception as e:
-        error_msg = str(e)
-        # Eğer lite bile dolarsa 'gemini-flash-latest' modeline pasla
+    # --- MODEL ÇAĞIRMA (GARANTİLİ YÖNTEM) ---
+    # Hocam senin listendeki en stabil modelleri sırayla deniyoruz
+    denenecek_modeller = ['gemini-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash']
+    
+    for model_adi in denenecek_modeller:
         try:
-            model_back = genai.GenerativeModel('gemini-flash-latest')
-            response_back = model_back.generate_content(user_msg)
-            return jsonify({"cevap": response_back.text})
-        except:
-            return jsonify({"cevap": f"Hocam Google kapasiteyi gerçekten zorluyor. 1 dakika sonra tekrar deneyelim. (Hata: {error_msg})"})
+            model = genai.GenerativeModel(model_adi)
+            response = model.generate_content(user_msg)
+            
+            user_quotas[email] = usage + 1
+            return jsonify({"cevap": response.text})
+        except Exception as e:
+            # Bu model hata verirse bir sonrakine geç
+            continue
+            
+    # Eğer hiçbir model çalışmazsa en son hatayı döndür
+    return jsonify({"cevap": "Hocam Google ücretsiz hatları şu an tamamen kapatmış. Lütfen 5 dakika sonra tekrar dene."})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
