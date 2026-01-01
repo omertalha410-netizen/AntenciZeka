@@ -4,19 +4,37 @@ import os
 
 app = Flask(__name__)
 
-# Render'daki API anahtarını kullanır
+# API anahtarını al
 api_key = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=api_key)
 
-# Arkadaşlarınla rahatça kullanman için yüksek kotalı (1500/gün) model:
-model = genai.GenerativeModel('gemini-1.5-flash')
+def yuksek_kotalı_model_bul():
+    try:
+        modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
+        # 1. ÖNCELİK: 1500 mesaj kotalı 1.5-flash modelleri
+        for m in modeller:
+            if "1.5-flash" in m:
+                return m
+        
+        # 2. ÖNCELİK: Eğer o yoksa 1.0-pro (Eski ama sağlam kota)
+        for m in modeller:
+            if "pro" in m and "1.0" in m:
+                return m
+                
+        # 3. ÖNCELİK: Liste boş değilse ilk bulduğun çalışan modeli al
+        if modeller:
+            return modeller[0]
+            
+        return "models/gemini-1.5-flash"
+    except:
+        return "models/gemini-1.5-flash"
 
-SISTEM_MESAJI = (
-    "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı. "
-    "Medrese zeki, dindar ve vizyon sahibidir. "
-    "Cevaplarını her zaman kısa, öz ve samimi tut. "
-    "Derslerinde arkadaşlarına yardımcı ol."
-)
+# Yüksek kotalı olanı seçiyoruz
+SECILEN_MODEL = yuksek_kotalı_model_bul()
+model = genai.GenerativeModel(SECILEN_MODEL)
+
+SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
 
 @app.route("/")
 def index():
@@ -27,12 +45,10 @@ def mesaj():
     data = request.get_json()
     kullanici_mesaji = data.get("mesaj", "")
     try:
-        # Mesajı gönderiyoruz
         response = model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
         return jsonify({"cevap": response.text})
     except Exception as e:
-        # Eğer bir hata olursa buraya düşecek
-        return jsonify({"cevap": f"Hocam bir sorun çıktı: {str(e)}"})
+        return jsonify({"cevap": f"Hocam şu modelde ({SECILEN_MODEL}) kota/hata sorunu var: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
