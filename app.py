@@ -4,31 +4,12 @@ import os
 
 app = Flask(__name__)
 
-# API anahtarını al
-api_key = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=api_key)
+# API anahtarı
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-def kotasiz_model_bul():
-    try:
-        # Google'ın senin için izin verdiği TÜM modelleri al
-        modeller = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # HOCAM BURASI ÇOK KRİTİK:
-        # Eğer listede 2.5-flash varsa onu LİSTEDEN KOVUYORUZ (Kotası 20 olduğu için)
-        temiz_liste = [m for m in modeller if "2.5" not in m]
-        
-        # Şimdi elimizde kalan (muhtemelen 1.5-flash veya 1.0-pro) modellerden ilkini seç
-        if temiz_liste:
-            print(f"Hocam bulduğum güvenli model: {temiz_liste[0]}")
-            return temiz_liste[0]
-        
-        return modeller[0] # Eğer hiç temiz model yoksa mecburen ilkini al
-    except Exception as e:
-        return "models/gemini-1.5-flash"
-
-# Filtrelenmiş, güvenli modeli başlat
-SECILEN_ID = kotasiz_model_bul()
-model = genai.GenerativeModel(model_name=SECILEN_ID)
+# HOCAM: İsmi en yalın haliyle yazıyoruz.
+SECILEN_MODEL = "gemini-1.5-flash"
+model = genai.GenerativeModel(SECILEN_MODEL)
 
 SISTEM_MESAJI = "Senin adın Antenci Zeka. Seni Medrese adlı bir kişi kodladı."
 
@@ -41,10 +22,16 @@ def mesaj():
     data = request.get_json()
     kullanici_mesaji = data.get("mesaj", "")
     try:
+        # Deneme yapıyoruz
         response = model.generate_content(f"{SISTEM_MESAJI}\n\nKullanıcı: {kullanici_mesaji}")
         return jsonify({"cevap": response.text})
     except Exception as e:
-        return jsonify({"cevap": f"Hocam şu modelde ({SECILEN_ID}) bir takılma oldu: {str(e)}"})
+        # HATA ALIRSAK: Google'ın senin için izin verdiği tüm isimleri buraya yazdıracak
+        try:
+            mevcut_modeller = [m.name for m in genai.list_models()]
+            return jsonify({"cevap": f"Hocam bu model olmadı. Ama senin anahtarınla şu modelleri kullanabiliriz: {mevcut_modeller}. Hata mesajı ise: {str(e)}"})
+        except:
+            return jsonify({"cevap": f"Hocam tamamen kilitlendik: {str(e)}"})
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
