@@ -4,10 +4,10 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zekanin_kesin_yemini_v100"
+app.secret_key = "antenci_zekanin_yemini_v100_kesin"
 
 # --- CONFIG ---
-# Render'daki Environment Variables kısmına GEMINI_API_KEY olarak ekle hocam
+# Render'daki Environment Variables kısmına yeni hesabın anahtarını ekle hocam
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
 
@@ -32,7 +32,6 @@ def index():
 
 @app.route('/login')
 def login():
-    # Login hatasını kökten çözmek için adresi sabitledik
     redirect_uri = "https://antencizeka.onrender.com/login/callback"
     return google.authorize_redirect(redirect_uri)
 
@@ -65,25 +64,20 @@ def mesaj():
         
     usage = user_quotas.get(email, 0)
     if usage >= limit:
-        return jsonify({"cevap": f"Hocam senin dükkan kotan doldu ({limit}). Yarın yine gel."})
+        return jsonify({"cevap": f"Hocam senin dükkan kotan doldu ({limit})."})
 
-    # --- MODEL ÇAĞIRMA (GARANTİLİ YÖNTEM) ---
-    # Hocam senin listendeki en stabil modelleri sırayla deniyoruz
-    denenecek_modeller = ['gemini-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash']
-    
-    for model_adi in denenecek_modeller:
-        try:
-            model = genai.GenerativeModel(model_adi)
-            response = model.generate_content(user_msg)
-            
-            user_quotas[email] = usage + 1
-            return jsonify({"cevap": response.text})
-        except Exception as e:
-            # Bu model hata verirse bir sonrakine geç
-            continue
-            
-    # Eğer hiçbir model çalışmazsa en son hatayı döndür
-    return jsonify({"cevap": "Hocam Google ücretsiz hatları şu an tamamen kapatmış. Lütfen 5 dakika sonra tekrar dene."})
+    # --- MODEL ÇAĞIRMA (TEK VE EN SAĞLAM MODEL) ---
+    try:
+        # gemini-1.5-flash: Ücretsiz katmanda en stabil ve en geniş kotalı modeldir.
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(user_msg)
+        
+        user_quotas[email] = usage + 1
+        return jsonify({"cevap": response.text})
+
+    except Exception as e:
+        # Hata olursa detayı patrona (sana) göstersin
+        return jsonify({"cevap": f"Hocam yeni hesapta bile bir takılma oldu. Hata detayı: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
