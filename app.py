@@ -4,15 +4,16 @@ import os
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_v7_final"
+app.secret_key = "antenci_final_v9"
 
-# --- AYARLAR ---
+# --- GOOGLE AYARLARI ---
+# Render Environment'tan anahtarı çekiyoruz
+api_key = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=api_key)
+
 GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET = "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"
 PATRON_EMAIL = "omertalha410@gmail.com"
-
-# Gemini'yi en temel haliyle yapılandır
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 oauth = OAuth(app)
 google = oauth.register(
@@ -52,7 +53,6 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     email = session.get('user', {}).get('email')
     
-    # --- KOTA SİSTEMİ ---
     if email == PATRON_EMAIL:
         limit = 999999
     elif email:
@@ -66,20 +66,14 @@ def mesaj():
         return jsonify({"cevap": f"Hocam kotan doldu ({limit})."})
 
     try:
-        # MODELİ BURADA ÇAĞIRIYORUZ - EN GÜNCEL METOD
-        # Not: models/ takısını kaldırdık ve en stabil versiyonu seçtik
+        # En stabil çağrı yöntemi
         model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(user_msg)
         
-        if response.text:
-            user_quotas[email] = usage + 1
-            return jsonify({"cevap": response.text})
-        else:
-            return jsonify({"cevap": "Hocam Google boş cevap döndü, tekrar dener misin?"})
-            
+        user_quotas[email] = usage + 1
+        return jsonify({"cevap": response.text})
     except Exception as e:
-        # Hata mesajını sadeleştirdik, kütüphane çakışmasını aşmak için manuel kontrol
-        return jsonify({"cevap": f"Sistem güncelleniyor hocam, lütfen 1 dakika sonra tekrar yazın. (Hata: {str(e)})"})
+        return jsonify({"cevap": f"Hocam yeni anahtar devreye giriyor, 10 saniye sonra dener misin? (Hata: {str(e)})"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
