@@ -1,28 +1,13 @@
-# GUNCELLEME_V2026_SON_DENEME
-from flask import Flask, render_template, request, jsonify, url_for, redirect, session
 import google.generativeai as genai
 import os
-from authlib.integrations.flask_client import OAuth
+from flask import Flask, render_template, request, jsonify, session, redirect
 
 app = Flask(__name__)
-app.secret_key = "antenci_final_2026_insallah"
+app.secret_key = "antenci_final_v2026"
 
-# --- CONFIG ---
+# API Ayarı
 API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=API_KEY)
-
-GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
-PATRON_EMAIL = "omertalha410@gmail.com"
-
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
 
 user_quotas = {}
 
@@ -30,52 +15,26 @@ user_quotas = {}
 def index():
     return render_template('index.html')
 
-@app.route('/login')
-def login():
-    redirect_uri = "https://antencizeka.onrender.com/login/callback"
-    return google.authorize_redirect(redirect_uri)
-
-@app.route('/login/callback')
-def auth():
-    token = google.authorize_access_token()
-    user_info = google.parse_id_token(token, nonce=None)
-    session['user'] = user_info
-    return redirect('/')
-
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect('/')
-
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
     user_msg = data.get("mesaj", "")
-    email = session.get('user', {}).get('email')
+    email = request.remote_addr # Şimdilik en basit yöntemle gidelim
     
-    if email == PATRON_EMAIL:
-        limit = 999999
-    elif email:
-        limit = 80
-    else:
-        email = request.remote_addr
-        limit = 50
-        
-    usage = user_quotas.get(email, 0)
-    if usage >= limit:
-        return jsonify({"cevap": f"Hocam dükkan kotan doldu ({limit})."})
-
+    # 2026'da kotaları en stabil olan çekirdek model:
     try:
-        # HOCAM DİKKAT: Buraya en güvenli modeli (1.5-flash) ÇAKTIK. 
-        # 2.5-pro hatası alıyorsan bu satır değişmemiş demektir!
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # HOCAM DİKKAT: En 'eski' ama en 'açık' model budur.
+        model = genai.GenerativeModel('gemini-1.0-pro') 
         response = model.generate_content(user_msg)
-        
-        user_quotas[email] = usage + 1
         return jsonify({"cevap": response.text})
-
     except Exception as e:
-        return jsonify({"cevap": f"Hata: {str(e)}"})
+        # Eğer bu da olmazsa, tek bir alternatifimiz kalıyor:
+        try:
+            model = genai.GenerativeModel('gemini-1.5-flash-8b') # En küçük model
+            response = model.generate_content(user_msg)
+            return jsonify({"cevap": response.text})
+        except:
+            return jsonify({"cevap": f"Hocam Google bu anahtarı/IP'yi tamamen kilitledi. Hata: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
