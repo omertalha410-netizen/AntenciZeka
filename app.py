@@ -1,76 +1,39 @@
-from flask import Flask, render_template, request, jsonify, session, redirect
-import os
+from flask import Flask, render_template, request, jsonify
 import requests
-from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-app.secret_key = "antenci_zeka_llama_v1"
 
-# --- CONFIG ---
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-# Google Login (İstersen kalsın, istersen kaldırabiliriz hocam)
-GOOGLE_CLIENT_ID = "876789867408-lfnjl3neiqa0f842qfhsm0fl2u0pq54l.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
-    client_kwargs={'scope': 'openid email profile'}
-)
+# Hocam burası Hugging Face'in ücretsiz Llama 3 adresi
+API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-3B-Instruct"
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/login')
-def login():
-    redirect_uri = "https://antencizeka.onrender.com/login/callback"
-    return google.authorize_redirect(redirect_uri)
-
-@app.route('/login/callback')
-def auth():
-    token = google.authorize_access_token()
-    user_info = google.parse_id_token(token, nonce=None)
-    session['user'] = user_info
-    return redirect('/')
 
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
     user_msg = data.get("mesaj", "")
     
-    # Llama 3.1 - 70B modelini kullanıyoruz, canavardır hocam
+    # Hugging Face için çok basit bir kurulum
     payload = {
-        "model": "llama-3.1-70b-versatile",
-        "messages": [
-            {"role": "system", "content": "Sen yardımsever bir asistansın ve kullanıcıya her zaman 'Hocam' diye hitap ediyorsun."},
-            {"role": "user", "content": user_msg}
-        ],
-        "temperature": 0.7
-    }
-    
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
+        "inputs": f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{user_msg}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+        "parameters": {"max_new_tokens": 500, "return_full_text": False}
     }
 
     try:
-        response = requests.post(GROQ_API_URL, headers=headers, json=payload)
+        response = requests.post(API_URL, json=payload)
         res_json = response.json()
         
-        # Groq'tan gelen cevabı alıyoruz
-        if "choices" in res_json:
-            cevap = res_json['choices'][0]['message']['content']
+        # Cevabı temizleyip gönderiyoruz
+        if isinstance(res_json, list) and len(res_json) > 0:
+            cevap = res_json[0].get('generated_text', 'Hocam cevap boş geldi.')
             return jsonify({"cevap": cevap})
         else:
-            return jsonify({"cevap": f"Hocam bir sorun var: {res_json.get('error', {}).get('message', 'Bilinmeyen hata')}"})
+            return jsonify({"cevap": "Hocam şu an sunucu meşgul, 10 saniye sonra tekrar dene."})
             
     except Exception as e:
-        return jsonify({"cevap": f"Hocam Llama sunucusuna bağlanamadım: {str(e)}"})
+        return jsonify({"cevap": f"Hocam bir hata çıktı: {str(e)}"})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000)
