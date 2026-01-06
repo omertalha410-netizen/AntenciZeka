@@ -1,5 +1,3 @@
-flask
-google-generativeai==0.8.3
-authlib
 requests
-flask-login
+flask
+authlib
