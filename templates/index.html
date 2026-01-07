@@ -7,28 +7,17 @@
     <style>
         :root { --gold: #FFD700; --bg: #121212; --card: #1e1e1e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        
-        header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 30px; background: #1a1a1a; border-bottom: 2px solid var(--gold);
-        }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 30px; background: #1a1a1a; border-bottom: 2px solid var(--gold); }
         .logo-area h1 { color: var(--gold); margin: 0; font-size: 1.5rem; }
-        .logo-area small { color: #888; font-weight: bold; }
-
-        .btn-login { 
-            background: white; color: black; padding: 8px 15px; border-radius: 20px; 
-            text-decoration: none; font-weight: bold; display: flex; align-items: center; font-size: 0.8rem;
-        }
-        .user-tag { color: var(--gold); font-weight: bold; font-size: 0.9rem; }
-
+        .btn-login { background: white; color: black; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; display: flex; align-items: center; font-size: 0.8rem; }
         #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px; border-radius: 15px; }
+        .msg { max-width: 80%; padding: 12px; border-radius: 15px; line-height: 1.5; }
         .user { align-self: flex-end; background: var(--gold); color: black; }
         .bot { align-self: flex-start; background: var(--card); border: 1px solid #333; }
-
         #input-area { padding: 20px; background: #1a1a1a; display: flex; gap: 10px; }
         input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 25px; outline: none; }
         button { background: var(--gold); border: none; padding: 10px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        .dots { font-style: italic; color: #888; }
     </style>
 </head>
 <body>
@@ -38,22 +27,21 @@
         <h1>ANTENCİ ZEKA v2.5 Alfa</h1>
         <small>Powered by Medrese</small>
     </div>
-    
     <div>
         {% if session.get('user') %}
-            <span class="user-tag">Hocam: {{ session.get('user').get('name') }}</span>
-            <a href="/logout" style="color: #ff4d4d; margin-left: 10px; text-decoration: none; font-size: 0.8rem;">[Çıkış]</a>
+            <span style="color: var(--gold);">Hocam Hoş Geldin!</span>
+            <a href="/logout" style="color: #ff4d4d; margin-left: 10px; text-decoration: none;">[Çıkış]</a>
         {% else %}
             <a href="/login" class="btn-login">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" style="width: 15px; margin-right: 8px;">
-                Giriş Yap (80 Hak)
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 15px; margin-right: 8px;">
+                Giriş Yap (Sınırsız)
             </a>
         {% endif %}
     </div>
 </header>
 
 <div id="chat">
-    <div class="msg bot">Selam hocam! Ben Antenci Zeka. Powered by Medrese. 🦾</div>
+    <div class="msg bot">Selam hocam! Ben Antenci Zeka. Size nasıl yardımcı olabilirim? 🦾</div>
 </div>
 
 <div id="input-area">
@@ -67,17 +55,26 @@
         const chat = document.getElementById('chat');
         if (!input.value.trim()) return;
 
-        chat.innerHTML += `<div class="msg user">${input.value}</div>`;
         const userMsg = input.value;
+        chat.innerHTML += `<div class="msg user">${userMsg}</div>`;
         input.value = '';
 
-        const res = await fetch('/mesaj', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mesaj: userMsg })
-        });
-        const data = await res.json();
-        chat.innerHTML += `<div class="msg bot">${data.cevap}</div>`;
+        const tempId = "tid-" + Date.now();
+        chat.innerHTML += `<div class="msg bot dots" id="${tempId}">Antenci Zeka yazıyor...</div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+        try {
+            const res = await fetch('/mesaj', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mesaj: userMsg })
+            });
+            const data = await res.json();
+            document.getElementById(tempId).innerText = data.cevap;
+            document.getElementById(tempId).classList.remove('dots');
+        } catch (e) {
+            document.getElementById(tempId).innerText = "Hocam bir hata oluştu.";
+        }
         chat.scrollTop = chat.scrollHeight;
     }
 </script>
