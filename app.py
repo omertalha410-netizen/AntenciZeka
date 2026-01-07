@@ -5,6 +5,7 @@ import requests
 app = Flask(__name__)
 
 # --- AYARLAR ---
+# Vercel Settings -> Environment Variables kısmına GROQ_API_KEY eklediğinden emin ol hocam.
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
@@ -18,14 +19,25 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     
     if not GROQ_API_KEY:
-        return jsonify({"cevap": "Hocam Vercel ayarlarından GROQ_API_KEY eklemeyi unutmuşuz!"})
+        return jsonify({"cevap": "Hocam Vercel ayarlarından GROQ_API_KEY eklenmemiş, dükkanın anahtarı eksik!"})
+
+    # --- MEDRESE v2.5 ALFA SİSTEM TALİMATI ---
+    system_instructions = (
+        "Sen 'Medrese' ve Hocan tarafından geliştirilen, 'v2.5 alfa' sürümündeki eğitim asistanısın. "
+        "Birincil görevin öğrencilere ödevlerinde yardımcı olmak, konu anlatımı yapmak ve eğitici sohbetler etmektir. "
+        "Ödevlerle ilgili sorularda kesinlikle Türkiye Cumhuriyeti Milli Eğitim Bakanlığı (MEB) müfredatını, "
+        "OGM Materyal içeriklerini ve EBA (Eğitim Bilişim Ağı) standartlarını temel alarak cevap vermelisin. "
+        "Kullanıcıya her zaman 'Hocam' diye hitap etmelisin. "
+        "Kim olduğun sorulursa Medrese v2.5 alfa olduğunu ve Hocan tarafından eğitildiğini söylemelisin."
+    )
 
     payload = {
         "model": "llama-3.3-70b-versatile",
         "messages": [
-            {"role": "system", "content": "Sen zeki bir asistansın. Kullanıcıya her zaman 'Hocam' dersin."},
+            {"role": "system", "content": system_instructions},
             {"role": "user", "content": user_msg}
-        ]
+        ],
+        "temperature": 0.5 # Eğitim için daha tutarlı cevaplar vermesi için düşürdüm hocam.
     }
     
     headers = {
@@ -41,11 +53,10 @@ def mesaj():
             cevap = res_json['choices'][0]['message']['content']
             return jsonify({"cevap": cevap})
         else:
-            return jsonify({"cevap": f"Hocam bir terslik var: {res_json.get('error', {}).get('message', 'Bilinmeyen hata')}"})
+            return jsonify({"cevap": f"Hocam bir hata var: {res_json.get('error', {}).get('message', 'Bilinmeyen hata')}"})
             
     except Exception as e:
-        return jsonify({"cevap": f"Hocam bağlantı koptu: {str(e)}"})
+        return jsonify({"cevap": f"Hocam bağlantıda bir sıkıntı çıktı: {str(e)}"})
 
-# Vercel için bu kısım opsiyonel ama kalsın
 if __name__ == "__main__":
     app.run()
