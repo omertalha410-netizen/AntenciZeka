@@ -3,36 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antenci Zeka v2.5 Alfa</title>
+    <title>Antenci Zeka v2.5 Beta</title>
     <script defer src="/_vercel/insights/script.js"></script>
     <style>
-        :root { --gold: #FFD700; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { 
+            --gold: #FFD700; 
+            --bg: #121212; 
+            --card: #1e1e1e; 
+            --text: #e0e0e0;
+        }
         
-        /* AÇILIŞ EKRANI (SPLASH) */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        /* --- AÇILIŞ EKRANI (SPLASH SCREEN) --- */
         #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(18, 18, 18, 0.98); display: flex; justify-content: center; align-items: center;
-            z-index: 10000; transition: transform 1.2s ease-in-out, opacity 1s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(18, 18, 18, 0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: transform 1.2s ease-in-out, opacity 1s ease;
         }
         .splash-content { text-align: center; }
-        .slogan { color: var(--gold); font-size: 2.5rem; font-weight: bold; margin: 0; }
-        .version-tag { color: var(--gold); opacity: 0.7; font-weight: bold; margin-top: 10px; }
+        .slogan { 
+            color: var(--gold); 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+            margin: 0; 
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        .version-tag { 
+            color: var(--gold); 
+            opacity: 0.8; 
+            font-weight: bold; 
+            margin-top: 15px; 
+            letter-spacing: 2px;
+        }
         .fade-out { transform: translateY(-100%); opacity: 0; }
 
-        /* HEADER */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 30px; background: #1a1a1a; border-bottom: 2px solid var(--gold); }
-        .logo-area h1 { color: var(--gold); margin: 0; font-size: 1.5rem; }
-        .v-small { font-size: 0.8rem; opacity: 0.6; margin-left: 5px; }
-        .btn-login { background: white; color: black; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; display: flex; align-items: center; font-size: 0.8rem; }
-        
-        #chat { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px; border-radius: 15px; line-height: 1.5; }
-        .user { align-self: flex-end; background: var(--gold); color: black; }
-        .bot { align-self: flex-start; background: var(--card); border: 1px solid #333; }
-        #input-area { padding: 20px; background: #1a1a1a; display: flex; gap: 10px; }
-        input { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 12px; border-radius: 25px; outline: none; }
-        button { background: var(--gold); border: none; padding: 10px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+        /* --- ÜST MENÜ (HEADER) --- */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 30px; 
+            background: #1a1a1a; 
+            border-bottom: 2px solid var(--gold); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .logo-area h1 { color: var(--gold); margin: 0; font-size: 1.5rem; display: flex; align-items: center; }
+        .v-beta { font-size: 0.7rem; background: var(--gold); color: black; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-weight: bold; }
+        .btn-login { 
+            background: white; 
+            color: black; 
+            padding: 8px 18px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+        .btn-login:hover { background: var(--gold); }
+
+        /* --- SOHBET ALANI --- */
+        #chat { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            background-image: radial-gradient(circle at center, #1a1a1a 0%, #121212 100%);
+        }
+        .msg { max-width: 75%; padding: 14px; border-radius: 18px; line-height: 1.6; font-size: 0.95rem; position: relative; }
+        .user { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 2px; font-weight: 500; }
+        .bot { align-self: flex-start; background: var(--card); border: 1px solid #333; border-bottom-left-radius: 2px; }
+
+        /* --- GİRİŞ ALANI --- */
+        #input-area { padding: 20px; background: #1a1a1a; display: flex; gap: 12px; border-top: 1px solid #333; }
+        input { 
+            flex: 1; 
+            background: #2a2a2a; 
+            border: 1px solid #444; 
+            color: white; 
+            padding: 14px 20px; 
+            border-radius: 30px; 
+            outline: none; 
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        input:focus { border-color: var(--gold); }
+        button { 
+            background: var(--gold); 
+            border: none; 
+            padding: 10px 25px; 
+            border-radius: 30px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: transform 0.2s, background 0.3s;
+        }
+        button:hover { background: #e6c200; transform: scale(1.05); }
+        .dots { font-style: italic; color: var(--gold); }
     </style>
 </head>
 <body>
@@ -40,69 +127,87 @@
 <div id="splash-screen">
     <div class="splash-content">
         <h2 class="slogan">EĞİTİMİN GELECEĞİNE HOŞ GELDİNİZ</h2>
-        <p class="version-tag">Antenci Zeka v2.5 Alfa</p>
+        <p class="version-tag">Antenci Zeka v2.5 Beta</p>
     </div>
 </div>
 
 <header>
     <div class="logo-area">
-        <h1>ANTENCİ ZEKA <span class="v-small">v2.5 Alfa</span></h1>
-        <small>Powered by Medrese Ekibi</small>
+        <h1>ANTENCİ ZEKA <span class="v-beta">BETA</span></h1>
+        <small style="opacity: 0.7;">Powered by Medrese Ekibi</small>
     </div>
     <div>
         {% if session.get('user') %}
             <div style="display: flex; align-items: center;">
-                <img src="{{ session.get('user').get('picture') }}" style="width:30px; border-radius:50%; margin-right:10px; border: 1px solid var(--gold);">
-                <span style="color: var(--gold);">{{ session.get('user').get('given_name') }} Hocam</span>
-                <a href="/logout" style="color: #ff4d4d; margin-left: 15px; text-decoration: none; font-size: 0.8rem;">[Çıkış]</a>
+                <img src="{{ session.get('user').get('picture') }}" style="width:32px; border-radius:50%; margin-right:12px; border: 2px solid var(--gold);">
+                <span style="color: var(--gold); font-weight: bold;">{{ session.get('user').get('given_name') }} Hocam</span>
+                <a href="/logout" style="color: #ff4d4d; margin-left: 18px; text-decoration: none; font-size: 0.8rem; font-weight: bold;">[ÇIKIŞ]</a>
             </div>
         {% else %}
-            <a href="/login" class="btn-login">Google ile Giriş</a>
+            <a href="/login" class="btn-login">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 16px; margin-right: 10px;">
+                Google ile Giriş Yap
+            </a>
         {% endif %}
     </div>
 </header>
 
 <div id="chat">
-    <div class="msg bot">Selamlar hocam! Ben Antenci Zeka v2.5. Buyur dükkan senin! 🦾</div>
+    <div class="msg bot">Selamlar hocam! Ben Antenci Zeka v2.5 Beta. Daha zeki, daha akıcı ve daha hazır olarak geri döndüm. Bugün neyi fethedeceğiz? 🚀🚩</div>
 </div>
 
 <div id="input-area">
-    <input type="text" id="msgInput" placeholder="Mesajınızı yazın hocam..." onkeypress="if(event.key === 'Enter') send()">
+    <input type="text" id="msgInput" placeholder="Mesajınızı buraya bırakın hocam..." onkeypress="if(event.key === 'Enter') send()">
     <button onclick="send()">GÖNDER</button>
 </div>
 
 <script>
+    // Açılış Ekranı Zamanlaması
     window.addEventListener('load', () => {
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             splash.classList.add('fade-out');
-            document.body.style.overflow = 'auto';
-            setTimeout(() => splash.style.display = 'none', 1200);
-        }, 3500);
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 1200);
+        }, 3500); // 3.5 saniye slogan görünür
     });
 
+    // Mesaj Gönderme Fonksiyonu
     async function send() {
         const input = document.getElementById('msgInput');
         const chat = document.getElementById('chat');
-        if (!input.value.trim()) return;
-
-        const userMsg = input.value;
-        chat.innerHTML += `<div class="msg user">${userMsg}</div>`;
-        input.value = '';
+        const text = input.value.trim();
         
-        const tempId = "tid-" + Date.now();
-        chat.innerHTML += `<div class="msg bot" id="${tempId}">...</div>`;
+        if (!text) return;
+
+        // Kullanıcı mesajını ekle
+        chat.innerHTML += `<div class="msg user">${text}</div>`;
+        input.value = '';
         chat.scrollTop = chat.scrollHeight;
 
-        const res = await fetch('/mesaj', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mesaj: userMsg })
-        });
-        const data = await res.json();
-        document.getElementById(tempId).innerText = data.cevap;
+        // "Düşünüyor" göstergesi
+        const tempId = "tid-" + Date.now();
+        chat.innerHTML += `<div class="msg bot dots" id="${tempId}">Antenci Zeka analiz ediyor...</div>`;
+        chat.scrollTop = chat.scrollHeight;
+
+        try {
+            const res = await fetch('/mesaj', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mesaj: text })
+            });
+            const data = await res.json();
+            
+            const botMsgDiv = document.getElementById(tempId);
+            botMsgDiv.innerText = data.cevap;
+            botMsgDiv.classList.remove('dots');
+        } catch (e) {
+            document.getElementById(tempId).innerText = "Hocam kısa süreli bir bağlantı sorunu yaşadım. Tekrar dener misin?";
+        }
         chat.scrollTop = chat.scrollHeight;
     }
 </script>
+
 </body>
 </html>
