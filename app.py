@@ -4,8 +4,7 @@ import requests
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
-# Vercel'e eklediğin SECRET_KEY'i burada kullanıyoruz
-app.secret_key = os.getenv("SECRET_KEY", "varsayilan_gizli_anahtar")
+app.secret_key = os.getenv("SECRET_KEY", "antenci_gizli_anahtar_99")
 
 # --- GOOGLE OAUTH AYARLARI ---
 oauth = OAuth(app)
@@ -24,37 +23,35 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 def index():
     return render_template('index.html')
 
-# --- GOOGLE GİRİŞ VE ÇIKIŞ YOLLARI ---
 @app.route('/login')
 def login():
-    # Burası kullanıcıyı Google'ın giriş sayfasına gönderir
     redirect_uri = url_for('auth', _external=True)
     return google.authorize_redirect(redirect_uri)
 
 @app.route('/auth')
 def auth():
-    # Google'dan dönen kullanıcı bilgilerini yakalarız
     token = google.authorize_access_token()
     user = google.get('https://openidconnect.googleapis.com/v1/userinfo').json()
-    session['user'] = user # Kullanıcıyı oturuma kaydet
+    session['user'] = user
     return redirect('/')
 
 @app.route('/logout')
 def logout():
-    session.clear() # Oturumu kapat
+    session.clear()
     return redirect('/')
 
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
     user_msg = data.get("mesaj", "")
-    
-    # Hafıza ve Zeka Ayarları
     history = session.get('history', [])
+
+    # DİL VE HİTAP FİLTRESİ
     system_instructions = (
         "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirildim. "
-        "Sadece Türkçe konuş. 'Hocam' hitabını nadir ve yerinde kullan. "
-        "Derslerde ciddi, günlük sohbette samimi ol."
+        "Sadece TÜRKÇE cevap ver. Asla yabancı karakter veya Çince kullanma. "
+        "Kullanıcıya sürekli 'Hocam' deme, sadece doğal akışta nadiren kullan. "
+        "Derslerde ciddi (MEB/EBA), sohbette samimi ol."
     )
 
     messages = [{"role": "system", "content": system_instructions}]
@@ -75,8 +72,8 @@ def mesaj():
         session['history'] = history[-10:]
         
         return jsonify({"cevap": cevap})
-    except Exception as e:
-        return jsonify({"cevap": "Hocam bir hata çıktı, bağlantıyı kontrol edin."})
+    except Exception:
+        return jsonify({"cevap": "Hocam bir hata oluştu."})
 
 if __name__ == "__main__":
     app.run()
