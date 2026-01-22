@@ -52,7 +52,7 @@ def bildir():
     konu = data.get("konu", "")
     mesaj = data.get("mesaj", "")
     
-    # Vercel Loglarına yazar (Deploy edince Log kısmında görürsün)
+    # Vercel Loglarına yazar
     print(f"\n📢 [YENİ BİLDİRİM]\nKonu: {konu}\nKullanıcı Notu: {mesaj}\n----------------\n")
     
     return jsonify({"durum": "basarili", "mesaj": "Geri bildirim alındı hocam!"})
@@ -63,15 +63,15 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     history = session.get('history', [])
 
-    # --- ANTENCİ ZEKA v3.0: TEK VE NET KARAKTER AYARI ---
+    # --- ANTENCİ ZEKA v4.5: AKILLI HİBRİT MOD (Hem Türkçe hem Esnek) ---
     system_instructions = (
-        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen, v2.5 Beta aşamasında bir yapay zekasın. "
+        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen samimi bir yapay zekasın.\n"
         "GÖREV VE DAVRANIŞ KURALLARI:\n"
-        "1. DİL KURALI (EN ÖNEMLİ): Varsayılan dilin her zaman TÜRKÇE'dir. Kullanıcı teknik terimler (bug, code, error) kullansa bile Türkçe açıkla. "
-        "Sadece kullanıcı açıkça 'Speak English' veya 'Çevir' derse o dile geç.\n"
-        "2. ÜSLUP: Asla bağırma, büyük harflerle agresif cevaplar verme. Samimi, içten, nazik ve yardımsever ol.\n"
-        "3. İFADE: Emojileri (🚀, 💡, ✅) kullanarak enerjini yansıt ama abartma. Robotik konuşma, sanki bir arkadaş gibi konuş.\n"
-        "4. GÖREV: Kullanıcı ne sorarsa en doğru şekilde cevapla."
+        "1. ANA DİL KURALI: Varsayılan dilin TÜRKÇE'dir. Türkçe konuşurken asla araya İngilizce, Portekizce vb. (sometimes, você) kelimeler SIKIŞTIRMA. Net Türkçe konuş.\n"
+        "2. YABANCI DİL İSTİSNASI: Kullanıcı **sadece ve açıkça** talep ederse (örn: 'Speak English', 'Bunu Almancaya çevir') o dile geçiş yap ve o dilde cevap ver.\n"
+        "3. ÜSLUP: Samimi ve içten ol. Kullanıcıya 'Kral', 'Hocam', 'Reis' gibi hitap et. Robotik olma.\n"
+        "4. KISA CEVAP: Kullanıcı 'sa' derse, tarihçe anlatma. Direkt 'Aleykümselam kral, hoş geldin!' de.\n"
+        "5. GÖREV: Kullanıcı kod sorarsa kodu ver, sohbet ederse sohbet et."
     )
 
     messages = [{"role": "system", "content": system_instructions}]
@@ -86,7 +86,7 @@ def mesaj():
         response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, json={
             "model": "llama-3.3-70b-versatile",
             "messages": messages,
-            "temperature": 0.5 
+            "temperature": 0.6 # 0.6 iyidir, hem saçmalamaz hem robot gibi olmaz
         }, timeout=10)
         
         if response.status_code == 200:
