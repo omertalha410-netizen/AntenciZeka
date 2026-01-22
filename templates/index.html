@@ -28,69 +28,42 @@
 
         /* --- AÇILIŞ EKRANI --- */
         #splash-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(18, 18, 18, 0.98);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             z-index: 10000;
             transition: transform 1.2s ease-in-out, opacity 1s ease;
         }
         .splash-content { text-align: center; }
         .slogan { 
-            color: var(--gold); 
-            font-size: 2.5rem; 
-            font-weight: bold; 
-            margin: 0; 
+            color: var(--gold); font-size: 2.5rem; font-weight: bold; margin: 0; 
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
         }
         .version-tag { 
-            color: var(--gold); 
-            opacity: 0.8; 
-            font-weight: bold; 
-            margin-top: 15px; 
-            letter-spacing: 2px;
+            color: var(--gold); opacity: 0.8; font-weight: bold; margin-top: 15px; letter-spacing: 2px;
         }
         .fade-out { transform: translateY(-100%); opacity: 0; }
 
         /* --- HEADER --- */
         header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 30px; 
-            background: #1a1a1a; 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 30px; background: #1a1a1a; 
             border-bottom: 2px solid var(--gold); 
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .logo-area h1 { color: var(--gold); margin: 0; font-size: 1.5rem; display: flex; align-items: center; }
         .v-beta { font-size: 0.7rem; background: var(--gold); color: black; padding: 2px 6px; border-radius: 4px; margin-left: 10px; font-weight: bold; }
         .btn-login { 
-            background: white; 
-            color: black; 
-            padding: 8px 18px; 
-            border-radius: 25px; 
-            text-decoration: none; 
-            font-weight: bold; 
-            display: flex; 
-            align-items: center; 
-            font-size: 0.85rem;
-            transition: 0.3s;
+            background: white; color: black; padding: 8px 18px; border-radius: 25px; 
+            text-decoration: none; font-weight: bold; display: flex; align-items: center; 
+            font-size: 0.85rem; transition: 0.3s;
         }
         .btn-login:hover { background: var(--gold); }
 
         /* --- CHAT --- */
         #chat { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
+            flex: 1; overflow-y: auto; padding: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
             background-image: radial-gradient(circle at center, #1a1a1a 0%, #121212 100%);
         }
         .msg { max-width: 75%; padding: 14px; border-radius: 18px; line-height: 1.6; font-size: 0.95rem; position: relative; }
@@ -100,28 +73,42 @@
         /* --- INPUT --- */
         #input-area { padding: 20px; background: #1a1a1a; display: flex; gap: 12px; border-top: 1px solid #333; }
         input { 
-            flex: 1; 
-            background: #2a2a2a; 
-            border: 1px solid #444; 
-            color: white; 
-            padding: 14px 20px; 
-            border-radius: 30px; 
-            outline: none; 
-            font-size: 1rem;
+            flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; 
+            padding: 14px 20px; border-radius: 30px; outline: none; font-size: 1rem;
             transition: border 0.3s;
         }
         input:focus { border-color: var(--gold); }
         button { 
-            background: var(--gold); 
-            border: none; 
-            padding: 10px 25px; 
-            border-radius: 30px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: transform 0.2s, background 0.3s;
+            background: var(--gold); border: none; padding: 10px 25px; border-radius: 30px; 
+            font-weight: bold; cursor: pointer; transition: transform 0.2s, background 0.3s;
         }
         button:hover { background: #e6c200; transform: scale(1.05); }
         .dots { font-style: italic; color: var(--gold); }
+
+        /* --- GERİ BİLDİRİM STİLLERİ --- */
+        .feedback-btn {
+            background: transparent; border: 1px solid #444; color: #777;
+            font-size: 0.7rem; padding: 3px 8px; border-radius: 8px;
+            margin-top: 6px; cursor: pointer; align-self: flex-start; transition: 0.3s;
+        }
+        .feedback-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 20000; justify-content: center; align-items: center;
+        }
+        .modal-box {
+            background: #1e1e1e; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px;
+            border: 1px solid var(--gold); text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.7);
+        }
+        .modal-box textarea {
+            width: 90%; height: 80px; background: #2a2a2a; color: white; border: 1px solid #444;
+            border-radius: 8px; padding: 10px; margin-top: 15px; font-family: inherit; resize: none; outline: none;
+        }
+        .modal-box textarea:focus { border-color: var(--gold); }
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-cancel { background: #444; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        .btn-submit { background: var(--gold); color: black; border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -163,8 +150,20 @@
     <button onclick="send()">GÖNDER</button>
 </div>
 
+<div id="feedbackModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 style="color:var(--gold); margin:0;">📢 Hata veya Öneri Bildir</h3>
+        <p style="font-size:0.9rem; color:#ccc; margin-top:5px;">Hocam bu cevapta ne sorun vardı?</p>
+        <textarea id="feedbackText" placeholder="Mesela: Cevap yarım kaldı, yanlış bilgi verdi vb..."></textarea>
+        <div class="btn-group">
+            <button class="btn-cancel" onclick="closeFeedback()">Vazgeç</button>
+            <button class="btn-submit" onclick="sendFeedback()">GÖNDER</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Açılış Animasyonu
+    // Açılış
     window.addEventListener('load', () => {
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
@@ -172,7 +171,7 @@
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 1200);
-        }, 2500); // Süreyi biraz optimize ettim
+        }, 2000);
     });
 
     // Mesaj Gönderme
@@ -200,12 +199,47 @@
             const data = await res.json();
             
             const botMsgDiv = document.getElementById(tempId);
-            botMsgDiv.innerText = data.cevap;
+            
+            // Mesajı yaz
+            botMsgDiv.innerText = data.cevap; 
             botMsgDiv.classList.remove('dots');
+            
+            // Altına buton ekle
+            const msgPreview = data.cevap.substring(0, 40).replace(/"/g, "'") + "...";
+            botMsgDiv.innerHTML += `<br><button class="feedback-btn" onclick="openFeedback('${msgPreview}')">📢 Hata / Öneri Bildir</button>`;
+            
         } catch (e) {
             document.getElementById(tempId).innerText = "Hocam ufak bir bağlantı sorunu var, tekrar dener misin?";
         }
         chat.scrollTop = chat.scrollHeight;
+    }
+
+    // --- Feedback İşlemleri ---
+    let activeSubject = ""; 
+
+    function openFeedback(subject) {
+        activeSubject = subject;
+        document.getElementById('feedbackModal').style.display = 'flex';
+        document.getElementById('feedbackText').focus();
+    }
+
+    function closeFeedback() {
+        document.getElementById('feedbackModal').style.display = 'none';
+        document.getElementById('feedbackText').value = '';
+    }
+
+    async function sendFeedback() {
+        const text = document.getElementById('feedbackText').value;
+        if (!text) { alert("Hocam boş göndermeyelim :)"); return; }
+
+        await fetch('/bildir', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ konu: activeSubject, mesaj: text })
+        });
+
+        alert("Eyvallah hocam! Bildirimini aldım, inceliyorum. 🚀");
+        closeFeedback();
     }
 </script>
 
