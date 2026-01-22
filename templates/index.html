@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antenci Zeka v2.5 Beta</title>
-    <script defer src="/_vercel/insights/script.js"></script>
+    
+    <script defer src="https://cdn.vercel-insights.com/v1/speed-insights/script.js"></script>
+    
     <style>
         :root { 
             --gold: #FFD700; 
@@ -24,7 +26,7 @@
             overflow: hidden; 
         }
 
-        /* --- AÇILIŞ EKRANI (SPLASH SCREEN) --- */
+        /* --- AÇILIŞ EKRANI --- */
         #splash-screen {
             position: fixed;
             top: 0;
@@ -55,7 +57,7 @@
         }
         .fade-out { transform: translateY(-100%); opacity: 0; }
 
-        /* --- ÜST MENÜ (HEADER) --- */
+        /* --- HEADER --- */
         header { 
             display: flex; 
             justify-content: space-between; 
@@ -81,7 +83,7 @@
         }
         .btn-login:hover { background: var(--gold); }
 
-        /* --- SOHBET ALANI --- */
+        /* --- CHAT --- */
         #chat { 
             flex: 1; 
             overflow-y: auto; 
@@ -95,7 +97,7 @@
         .user { align-self: flex-end; background: var(--gold); color: black; border-bottom-right-radius: 2px; font-weight: 500; }
         .bot { align-self: flex-start; background: var(--card); border: 1px solid #333; border-bottom-left-radius: 2px; }
 
-        /* --- GİRİŞ ALANI --- */
+        /* --- INPUT --- */
         #input-area { padding: 20px; background: #1a1a1a; display: flex; gap: 12px; border-top: 1px solid #333; }
         input { 
             flex: 1; 
@@ -153,7 +155,7 @@
 </header>
 
 <div id="chat">
-    <div class="msg bot">Selamlar hocam! Ben Antenci Zeka v2.5 Beta. Daha zeki, daha akıcı ve daha hazır olarak geri döndüm. Bugün neyi fethedeceğiz? 🚀🚩</div>
+    <div class="msg bot">Selamlar hocam! Ben Antenci Zeka v2.5 Beta. Hazırım, buyur başlayalım! 🚀</div>
 </div>
 
 <div id="input-area">
@@ -162,7 +164,7 @@
 </div>
 
 <script>
-    // Açılış Ekranı Zamanlaması
+    // Açılış Animasyonu
     window.addEventListener('load', () => {
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
@@ -170,10 +172,10 @@
             setTimeout(() => {
                 splash.style.display = 'none';
             }, 1200);
-        }, 3500); // 3.5 saniye slogan görünür
+        }, 2500); // Süreyi biraz optimize ettim
     });
 
-    // Mesaj Gönderme Fonksiyonu
+    // Mesaj Gönderme
     async function send() {
         const input = document.getElementById('msgInput');
         const chat = document.getElementById('chat');
@@ -181,12 +183,10 @@
         
         if (!text) return;
 
-        // Kullanıcı mesajını ekle
         chat.innerHTML += `<div class="msg user">${text}</div>`;
         input.value = '';
         chat.scrollTop = chat.scrollHeight;
 
-        // "Düşünüyor" göstergesi
         const tempId = "tid-" + Date.now();
         chat.innerHTML += `<div class="msg bot dots" id="${tempId}">Antenci Zeka analiz ediyor...</div>`;
         chat.scrollTop = chat.scrollHeight;
@@ -203,7 +203,7 @@
             botMsgDiv.innerText = data.cevap;
             botMsgDiv.classList.remove('dots');
         } catch (e) {
-            document.getElementById(tempId).innerText = "Hocam kısa süreli bir bağlantı sorunu yaşadım. Tekrar dener misin?";
+            document.getElementById(tempId).innerText = "Hocam ufak bir bağlantı sorunu var, tekrar dener misin?";
         }
         chat.scrollTop = chat.scrollHeight;
     }
