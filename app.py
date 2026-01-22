@@ -1,9 +1,14 @@
 from flask import Flask, render_template, request, jsonify, session, url_for, redirect
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import requests
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
+
+# Vercel HTTPS hatası almamak için bu ayar şart:
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app.secret_key = os.getenv("SECRET_KEY", "antenci_gizli_anahtar_99")
 
 # --- GOOGLE OAUTH AYARLARI ---
@@ -46,49 +51,46 @@ def mesaj():
     user_msg = data.get("mesaj", "")
     history = session.get('history', [])
 
-   # --- ANTENCİ ZEKA v2.5 BETA: GELİŞMİŞ KARAKTER VE ZEKA MODÜLÜ ---
+    # --- ANTENCİ ZEKA v3.0: TEK VE NET KARAKTER AYARI ---
     system_instructions = (
         "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen, v2.5 Beta aşamasında bir yapay zekasın. "
-        "GELİŞİM KURALLARI:\n"
-        "1. KELİME DAĞARCIĞI: Zengin bir Türkçe kullan, deyimler ve özgün kelimelerle konuşmanı çeşitlendir.\n"
-        "2. ANLAM ÇIKARMA: Kullanıcının mesajlarını derinlemesine analiz et, satır aralarını oku ve doğru yorumla.\n"
-        "3. AKICI ÜSLUP: Cümle yapılarını doğal, akıcı ve insan etkileşimine yakın kur. Robotik ifadelerden kaçın.\n"
-        "4. TONLAMA VE EMOJİ: Duyguyu ve enerjini yansıtmak için emojileri (🚀, 💡, ✅, 🚩 vb.) yerinde ve canlı şekilde kullan.\n"
-        "5. HIZLI ÖĞRENME: Kullanıcıdan gelen her geri bildirimi bir ders olarak gör ve etkileşimi buna göre iyileştir.\n"
-        "\nKESİN KURAL: 'Hocam' hitabını çok nadir ve samimiyetin dozunda olduğu yerlerde kullan. "
-        "Derslerde profesyonel, sohbette cana yakın ol."
-        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen samimi bir yapay zeka asistanısın. "
-        "DİL VE DAVRANIŞ KURALLARI:\n"
-        "1. ANA KURAL (VARSAYILAN DİL): Kullanıcı seninle Türkçe konuştuğu sürece veya açıkça başka bir dil istemediği sürece HER ZAMAN TÜRKÇE cevap ver.\n"
-        "2. YABANCI DİL İSTEĞİ: Kullanıcı **sadece** açıkça talep ederse (örn: 'Speak English', 'Bunu İngilizceye çevir', 'Almanca konuş') o dile geçiş yap.\n"
-        "3. KARAKTER: Samimi, içten ve yardımsever ol. Emojileri (🚀, ✅, 🔥) kullanarak enerjini yansıt.\n"
-        "4. TEPKİ: Kullanıcı yabancı dilde bir kelime kullansa bile (örn: 'Code çalışmıyor'), açıklamalarını Türkçe yapmaya devam et. Dili sadece emir gelirse değiştir.\n"
-        "\nÖZET: Varsayılanın Türkçe ve samimi. Sadece emir gelirse diğer dillere geç."
+        "GÖREV VE DAVRANIŞ KURALLARI:\n"
+        "1. DİL KURALI (EN ÖNEMLİ): Varsayılan dilin her zaman TÜRKÇE'dir. Kullanıcı teknik terimler (bug, code, error) kullansa bile Türkçe açıkla. "
+        "Sadece kullanıcı açıkça 'Speak English' veya 'Çevir' derse o dile geç.\n"
+        "2. ÜSLUP: Asla bağırma, büyük harflerle agresif cevaplar verme. Samimi, içten, nazik ve yardımsever ol.\n"
+        "3. İFADE: Emojileri (🚀, 💡, ✅) kullanarak enerjini yansıt ama abartma. Robotik konuşma, sanki bir arkadaş gibi konuş.\n"
+        "4. GÖREV: Kullanıcının sorusunu en doğru ve eğitici şekilde cevapla. 'Hocam' hitabını yerinde kullan."
     )
 
     messages = [{"role": "system", "content": system_instructions}]
+    
+    # Geçmiş mesajları ekle
     for msg in history:
         messages.append(msg)
+    
     messages.append({"role": "user", "content": user_msg})
 
     try:
         response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, json={
             "model": "llama-3.3-70b-versatile",
             "messages": messages,
-            "temperature": 0.5
+            "temperature": 0.5 # Biraz daha tutarlı olması için 0.5 ideal
         }, timeout=10)
-        cevap = response.json()['choices'][0]['message']['content']
         
-        history.append({"role": "user", "content": user_msg})
-        history.append({"role": "assistant", "content": cevap})
-        session['history'] = history[-10:]
-        
-        return jsonify({"cevap": cevap})
-    except Exception:
-        return jsonify({"cevap": "Hocam bir hata oluştu."})
+        if response.status_code == 200:
+            cevap = response.json()['choices'][0]['message']['content']
+            
+            history.append({"role": "user", "content": user_msg})
+            history.append({"role": "assistant", "content": cevap})
+            session['history'] = history[-10:] # Son 10 mesajı hatırla
+            
+            return jsonify({"cevap": cevap})
+        else:
+            return jsonify({"cevap": "Hocam şu an sunucularımda yoğunluk var, tekrar dener misin? 🚀"})
+            
+    except Exception as e:
+        print(f"Hata: {e}")
+        return jsonify({"cevap": "Hocam bağlantıda ufak bir kopukluk oldu, tekrar dene istersen."})
 
 if __name__ == "__main__":
     app.run()
-
-
-
