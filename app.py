@@ -6,7 +6,7 @@ from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 
-# Vercel HTTPS hatası almamak için bu ayar şart:
+# Vercel HTTPS hatası almamak için (Çok Önemli):
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 app.secret_key = os.getenv("SECRET_KEY", "antenci_gizli_anahtar_99")
@@ -45,6 +45,18 @@ def logout():
     session.clear()
     return redirect('/')
 
+# --- GERİ BİLDİRİM (FEEDBACK) KISMI ---
+@app.route('/bildir', methods=['POST'])
+def bildir():
+    data = request.get_json()
+    konu = data.get("konu", "")
+    mesaj = data.get("mesaj", "")
+    
+    # Vercel Loglarına yazar (Deploy edince Log kısmında görürsün)
+    print(f"\n📢 [YENİ BİLDİRİM]\nKonu: {konu}\nKullanıcı Notu: {mesaj}\n----------------\n")
+    
+    return jsonify({"durum": "basarili", "mesaj": "Geri bildirim alındı hocam!"})
+
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
@@ -59,7 +71,7 @@ def mesaj():
         "Sadece kullanıcı açıkça 'Speak English' veya 'Çevir' derse o dile geç.\n"
         "2. ÜSLUP: Asla bağırma, büyük harflerle agresif cevaplar verme. Samimi, içten, nazik ve yardımsever ol.\n"
         "3. İFADE: Emojileri (🚀, 💡, ✅) kullanarak enerjini yansıt ama abartma. Robotik konuşma, sanki bir arkadaş gibi konuş.\n"
-        "4. GÖREV: Kullanıcının sorusunu en doğru ve eğitici şekilde cevapla. 'Hocam' hitabını yerinde kullan."
+        "4. GÖREV: Kullanıcı ne sorarsa en doğru şekilde cevapla."
     )
 
     messages = [{"role": "system", "content": system_instructions}]
@@ -74,7 +86,7 @@ def mesaj():
         response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, json={
             "model": "llama-3.3-70b-versatile",
             "messages": messages,
-            "temperature": 0.5 # Biraz daha tutarlı olması için 0.5 ideal
+            "temperature": 0.5 
         }, timeout=10)
         
         if response.status_code == 200:
