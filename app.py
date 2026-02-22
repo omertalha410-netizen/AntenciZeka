@@ -2,16 +2,17 @@ from flask import Flask, render_template, request, jsonify, session, url_for, re
 from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import requests
+import io
+import pypdf
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
 
-# Vercel HTTPS hatası almamak için (Çok Önemli):
+# Vercel HTTPS ve Proxy ayarları 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-
 app.secret_key = os.getenv("SECRET_KEY", "antenci_gizli_anahtar_99")
 
-# --- GOOGLE OAUTH AYARLARI ---
+# --- GOOGLE OAUTH AYARLARI  ---
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
@@ -45,64 +46,74 @@ def logout():
     session.clear()
     return redirect('/')
 
-# --- GERİ BİLDİRİM (FEEDBACK) KISMI ---
-@app.route('/bildir', methods=['POST'])
-def bildir():
-    data = request.get_json()
-    konu = data.get("konu", "")
-    mesaj = data.get("mesaj", "")
+# --- PDF YÜKLEME VE OKUMA ---
+@app.route('/upload', methods=['POST'])
+def upload():
+    if 'file' not in request.files:
+        return jsonify({"hata": "Dosya seçilmedi kral"}), 400
     
-    # Vercel Loglarına yazar
-    print(f"\n📢 [YENİ BİLDİRİM]\nKonu: {konu}\nKullanıcı Notu: {mesaj}\n----------------\n")
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"hata": "Dosya ismi boş"}), 400
+
+    if file and file.filename.endswith('.pdf'):
+        try:
+            pdf_reader = pypdf.PdfReader(file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() or ""
+            
+            # PDF içeriğini oturuma kaydet (Not: Çok büyük PDF'lerde session limiti aşılabilir)
+            session['pdf_context'] = text[:15000] # Şimdilik ilk 15 bin karakter
+            return jsonify({"durum": "basarili", "mesaj": "PDF okundu, sorunu bekliyorum!"})
+        except Exception as e:
+            return jsonify({"hata": f"PDF okunurken hata oluştu: {str(e)}"}), 500
     
-    return jsonify({"durum": "basarili", "mesaj": "Geri bildirim alındı hocam!"})
+    return jsonify({"hata": "Sadece PDF yükleyebilirsin hocam"}), 400
 
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
     data = request.get_json()
     user_msg = data.get("mesaj", "")
     history = session.get('history', [])
+    pdf_context = session.get('pdf_context', None)
 
-    # --- ANTENCİ ZEKA v4.5: AKILLI HİBRİT MOD (Hem Türkçe hem Esnek) ---
+    # --- ANTENCİ ZEKA v2.6: DOKÜMAN ANALİZ MODU ---
+    context_prompt = ""
+    if pdf_context:
+        context_prompt = f"\n\nKULLANICININ YÜKLEDİĞİ DOKÜMAN İÇERİĞİ:\n{pdf_context}\n\nLütfen soruları bu dokümana göre cevapla."
+
     system_instructions = (
-        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen samimi bir yapay zekasın.\n"
-        "GÖREV VE DAVRANIŞ KURALLARI:\n"
-        "1. ANA DİL KURALI: Varsayılan dilin TÜRKÇE'dir. Türkçe konuşurken asla araya İngilizce, Portekizce vb. (sometimes, você) kelimeler SIKIŞTIRMA. Net Türkçe konuş.\n"
-        "2. YABANCI DİL İSTİSNASI: Kullanıcı **sadece ve açıkça** talep ederse (örn: 'Speak English', 'Bunu Almancaya çevir') o dile geçiş yap ve o dilde cevap ver.\n"
-        "3. ÜSLUP: Samimi ve içten ol. Kullanıcıya 'Kral', 'Hocam', 'Reis' gibi hitap et. Robotik olma.\n"
-        "4. KISA CEVAP: Kullanıcı 'sa' derse, tarihçe anlatma. Direkt 'Aleykümselam kral, hoş geldin!' de.\n"
-        "5. GÖREV: Kullanıcı kod sorarsa kodu ver, sohbet ederse sohbet et."
-    )
+        "Sen 'Antenci Zeka'sın. Bir doküman analiz asistanısın. \n"
+        "GÖREVLERİN:\n"
+        "1. Eğer aşağıda bir doküman içeriği varsa, kullanıcı sorularını BU DOKÜMANA GÖRE cevapla.\n"
+        "2. Dokümanda olmayan bilgi için 'Bu bilgi dokümanda yer almıyor kral' de.\n"
+        "3. Üslubun samimi olsun; 'Kral', 'Hocam', 'Reis' hitaplarını kullan. \n"
+        "4. Net ve Türkçe cevap ver. "
+    ) + context_prompt
 
     messages = [{"role": "system", "content": system_instructions}]
-    
-    # Geçmiş mesajları ekle
     for msg in history:
         messages.append(msg)
-    
     messages.append({"role": "user", "content": user_msg})
 
     try:
         response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {GROQ_API_KEY}"}, json={
             "model": "llama-3.3-70b-versatile",
             "messages": messages,
-            "temperature": 0.6 # 0.6 iyidir, hem saçmalamaz hem robot gibi olmaz
-        }, timeout=10)
+            "temperature": 0.5 
+        }, timeout=15)
         
         if response.status_code == 200:
             cevap = response.json()['choices'][0]['message']['content']
-            
             history.append({"role": "user", "content": user_msg})
             history.append({"role": "assistant", "content": cevap})
-            session['history'] = history[-10:] # Son 10 mesajı hatırla
-            
+            session['history'] = history[-6:] # Hafızayı taze tut
             return jsonify({"cevap": cevap})
-        else:
-            return jsonify({"cevap": "Hocam şu an sunucularımda yoğunluk var, tekrar dener misin? 🚀"})
+        return jsonify({"cevap": "Hocam Groq hattında bir parazit var, tekrar dene."})
             
     except Exception as e:
-        print(f"Hata: {e}")
-        return jsonify({"cevap": "Hocam bağlantıda ufak bir kopukluk oldu, tekrar dene istersen."})
+        return jsonify({"cevap": "Bağlantı koptu kral, PDF çok büyük olabilir mi?"})
 
 if __name__ == "__main__":
     app.run()
