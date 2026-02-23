@@ -2,4 +2,5 @@ flask
 requests
 authlib
 pypdf
-google-generativeai
+google-genai
+
