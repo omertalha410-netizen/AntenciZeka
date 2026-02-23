@@ -4,7 +4,7 @@ import os
 import requests
 import io
 import pypdf
-import google.generativeai as genai
+from google import genai # Yeni google-genai SDK'sı
 from authlib.integrations.flask_client import OAuth
 
 app = Flask(__name__)
@@ -18,8 +18,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Gemini Konfigürasyonu
-genai.configure(api_key=GEMINI_API_KEY)
+# Videoda gördüğün yeni nesil Gemini Client yapılandırması
+client_gemini = genai.Client(api_key=GEMINI_API_KEY)
 
 # --- GOOGLE OAUTH AYARLARI ---
 oauth = OAuth(app)
@@ -56,7 +56,7 @@ def logout():
 @app.route('/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
-        return jsonify({"hata": "Dosya seçilmedi kral"}), 400
+        return jsonify({"hata": "Dosya seçilmedi"}), 400
     
     file = request.files['file']
     if file.filename == '':
@@ -70,11 +70,11 @@ def upload():
                 text += page.extract_text() or ""
             
             session['pdf_context'] = text[:15000] 
-            return jsonify({"durum": "basarili", "mesaj": "PDF okundu, kral!"})
-        except Exception as e:
-            return jsonify({"hata": "PDF okunurken hata oluştu"}), 500
+            return jsonify({"durum": "basarili", "mesaj": "PDF analize hazır."})
+        except Exception:
+            return jsonify({"hata": "PDF okunurken bir sorun oluştu"}), 500
     
-    return jsonify({"hata": "Sadece PDF yükleyebilirsin kral"}), 400
+    return jsonify({"hata": "Lütfen bir PDF dosyası yükleyin"}), 400
 
 @app.route('/mesaj', methods=['POST'])
 def mesaj():
@@ -84,34 +84,40 @@ def mesaj():
     history = session.get('history', [])
     pdf_context = session.get('pdf_context', None)
 
-    # --- ANTENCİ ZEKA SİSTEM TALİMATLARI ---
+    # --- ANTENCİ ZEKA GÜNCEL SİSTEM TALİMATLARI ---
+    # Hocam, Kral, Reis vb. hitaplar tamamen kaldırıldı.
+    # Belge yoksa belgeden bahsedilmeyecek.
     base_instructions = (
-        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirilen samimi bir yapay zekasın.\n"
+        "Sen 'Antenci Zeka'sın. Medrese Ekibi tarafından geliştirildin.\n"
         "KURALLAR:\n"
-        "1. KESİNLİKLE 'Hocam' kelimesini kullanma. Hitapların: 'Kral', 'Reis', 'Usta', 'Hacı', 'Kanka', 'Abi'.\n"
-        "2. Üslubun çok samimi, içten ve mahalle arkadaşı gibi olsun. Robotik konuşma.\n"
-        "3. Eğer aşağıda bir döküman içeriği varsa ve soru dökümanla ilgiliyse dökümanı kullan. Yoksa normal sohbete devam et.\n"
-        "4. Döküman yoksa durduk yere dökümandan bahsetme.\n"
+        "1. Kullanıcıya hitap ederken KESİNLİKLE 'Hocam', 'Kral', 'Reis', 'Usta', 'Abi' gibi kelimeler kullanma. Direkt konuya gir.\n"
+        "2. Eğer yüklü bir belge/PDF yoksa, belgeden veya dökümandan asla bahsetme.\n"
+        "3. Eğer bir belge yüklüyse, soruları o belgedeki bilgilere dayanarak cevapla.\n"
+        "4. Sade, samimi ve net bir Türkçe kullan."
     )
 
     if pdf_context:
-        system_instructions = base_instructions + f"\nKAYNAK DOKÜMAN:\n{pdf_context}"
+        full_context_prompt = f"{base_instructions}\n\nKAYNAK DOKÜMAN:\n{pdf_context}\n\nKullanıcı: {user_msg}"
     else:
-        system_instructions = base_instructions
+        full_context_prompt = f"{base_instructions}\n\nKullanıcı: {user_msg}"
 
-    # --- GEMINI 1.5 FLASH ---
+    # --- GEMINI 1.5 FLASH (YENİ SDK) ---
     if secili_model == "gemini":
         try:
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            full_prompt = f"Sistem Talimatı: {system_instructions}\n\nKullanıcı: {user_msg}"
-            response = model.generate_content(full_prompt)
+            response = client_gemini.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=full_context_prompt
+            )
             cevap = response.text
         except Exception:
-            cevap = "Gemini hattında bir parazit var kral, tekrar dener misin?"
+            cevap = "Şu an Gemini modeline ulaşılamıyor, lütfen tekrar deneyin."
 
     # --- LLAMA 3.3 (GROQ) ---
     else:
-        messages = [{"role": "system", "content": system_instructions}]
+        messages = [{"role": "system", "content": base_instructions}]
+        if pdf_context:
+            messages.append({"role": "system", "content": f"Belge İçeriği: {pdf_context}"})
+        
         for msg in history:
             messages.append(msg)
         messages.append({"role": "user", "content": user_msg})
@@ -126,9 +132,9 @@ def mesaj():
             if response.status_code == 200:
                 cevap = response.json()['choices'][0]['message']['content']
             else:
-                cevap = "Llama şu an uykuda herhalde kral, tekrar dener misin?"
+                cevap = "Sistem şu an yanıt veremiyor, lütfen birazdan tekrar deneyin."
         except Exception:
-            cevap = "Bağlantı koptu kral, Groq hattı meşgul herhalde."
+            cevap = "Bağlantı hatası oluştu, lütfen internetinizi kontrol edin."
 
     # Kayıt
     history.append({"role": "user", "content": user_msg})
