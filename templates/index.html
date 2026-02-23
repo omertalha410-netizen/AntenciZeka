@@ -96,9 +96,9 @@
         
         <div style="margin-top: 20px; font-size: 0.75rem; color: #9ca3af; padding-left: 10px; letter-spacing: 1px;">ARAÇLAR</div>
         <div class="menu-item active-menu" onclick="switchToChat()"><i class="fas fa-robot"></i> Sohbet Botu</div>
-        <div class="menu-item"><i class="fas fa-play-circle"></i> Video Analiz</div>
-        <div class="menu-item"><i class="fas fa-file-powerpoint"></i> Slayt Oluştur</div>
-        <div class="menu-item"><i class="fas fa-search"></i> Araştırma</div>
+        <div class="menu-item" onclick="setMode('video')"><i class="fas fa-play-circle"></i> Video Analiz</div>
+        <div class="menu-item" onclick="setMode('slide')"><i class="fas fa-file-powerpoint"></i> Slayt Oluştur</div>
+        <div class="menu-item" onclick="setMode('research')"><i class="fas fa-search"></i> Araştırma</div>
         
         <div class="menu-item" style="margin-top: auto; color: #ef4444;"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</div>
     </aside>
@@ -137,14 +137,13 @@
                 <select id="modelSelect">
                     <option value="llama">Llama 3.3 (Groq)</option>
                     <option value="gemini">Gemini 1.5 Flash</option>
-                    <option value="grok">Grok (Beta)</option>
                 </select>
             </div>
             
             <div id="chat-messages"></div>
             
             <div class="bottom-input">
-                <input type="text" id="msgInput" placeholder="Mesajınızı buraya bırakın hocam..." onkeypress="if(event.key === 'Enter') send()">
+                <input type="text" id="msgInput" placeholder="Mesajını buraya bırak kral..." onkeypress="if(event.key === 'Enter') send()">
                 <button onclick="send()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold;">GÖNDER</button>
             </div>
         </div>
@@ -182,7 +181,6 @@
         const input = document.getElementById('msgInput');
         const directInput = document.getElementById('directText');
         
-        // Eğer landing sayfasındaysa directText'ten al, değilse msgInput'tan
         let text = input.value.trim();
         if(!text && document.getElementById('landing').style.display !== 'none') {
             text = directInput.value.trim();
@@ -223,12 +221,11 @@
         container.scrollTop = container.scrollHeight;
     }
 
-    // Arayüz modu değiştirme (Gelecek özellikler için hazırlık)
     function setMode(mode) {
         const tabs = document.querySelectorAll('.tab');
         tabs.forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + mode).classList.add('active');
-        // İleride buraya ilgili modun upload-grid içeriğini değiştiren kodlar gelecek.
+        const activeTab = document.getElementById('tab-' + mode);
+        if (activeTab) activeTab.classList.add('active');
     }
 </script>
 
