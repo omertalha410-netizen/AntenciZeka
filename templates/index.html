@@ -90,40 +90,41 @@
     </aside>
 
     <main>
-        <div id="pdf-name-tag"></div>
+    <div id="pdf-name-tag"></div>
 
-        <div id="landing">
-            <h1 class="hero-title">Sınıfının en iyisi AI araçları <br><span>öğrenciler ve araştırmacılar için</span></h1>
-            
-            <div class="tab-container">
-                <div class="tab active"><i class="fas fa-comment"></i> Sohbet</div>
-                <div class="tab"><i class="fas fa-list"></i> Özet</div>
-                <div class="tab"><i class="fas fa-shield-alt"></i> AI Dedektörü</div>
+    <div id="landing">
+        <h1 class="hero-title" style="line-height: 1.2;">Bilginin Frekansını Yakala <br><span style="background: linear-gradient(90deg, #8b5cf6, #d8b4fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Doküman, Video ve Sunumların Akıllı Merkezi</span></h1>
+        
+        <div class="tab-container">
+            <div class="tab active" id="tab-chat" onclick="setMode('chat')"><i class="fas fa-comment"></i> Sohbet (PDF)</div>
+            <div class="tab" id="tab-video" onclick="setMode('video')"><i class="fas fa-play-circle"></i> Video Analiz</div>
+            <div class="tab" id="tab-slide" onclick="setMode('slide')"><i class="fas fa-file-powerpoint"></i> Slayt Oluştur</div>
+            <div class="tab" id="tab-research" onclick="setMode('research')"><i class="fas fa-microscope"></i> Araştırma</div>
+        </div>
+
+        <div class="upload-grid" id="action-area">
+            <div class="upload-box" onclick="document.getElementById('pdfFile').click()">
+                <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                <p>Bir PDF bırak ya da <strong>yükle</strong></p>
+                <input type="file" id="pdfFile" accept=".pdf" style="display:none" onchange="uploadPDF()">
             </div>
-
-            <div class="upload-grid">
-                <div class="upload-box" onclick="document.getElementById('pdfFile').click()">
-                    <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: var(--primary); margin-bottom: 10px;"></i>
-                    <p>Bir dosya bırak ya da <strong>yükle</strong></p>
-                    <input type="file" id="pdfFile" accept=".pdf" style="display:none" onchange="uploadPDF()">
-                </div>
-                <div class="input-box">
-                    <textarea id="directText" placeholder="| Sohbet başlamak için soru sor"></textarea>
-                    <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 10px;">
-                        <span style="border: 1px solid #e5e7eb; padding: 2px 4px; border-radius: 4px;">CTRL</span> + <span style="border: 1px solid #e5e7eb; padding: 2px 4px; border-radius: 4px;">V</span> ile metin veya linkleri yapıştır
-                    </div>
+            <div class="input-box">
+                <textarea id="directText" placeholder="| Merak ettiğin konuyu yaz, Antenci Zeka arasın..."></textarea>
+                <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 10px;">
+                    <span style="border: 1px solid #e5e7eb; padding: 2px 4px; border-radius: 4px;">Hızlı Başlat</span> için konuyu gir ve Enter'a bas.
                 </div>
             </div>
         </div>
+    </div>
 
-        <div id="chat-view">
-            <div id="chat-messages"></div>
-            <div class="bottom-input">
-                <input type="text" id="msgInput" placeholder="Doküman hakkında her şeyi sorabilirsin hocam..." onkeypress="if(event.key === 'Enter') send()">
-                <button onclick="send()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Gönder</button>
-            </div>
+    <div id="chat-view">
+        <div id="chat-messages"></div>
+        <div class="bottom-input">
+            <input type="text" id="msgInput" placeholder="Mesajınızı buraya bırakın hocam..." onkeypress="if(event.key === 'Enter') send()">
+            <button onclick="send()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Gönder</button>
         </div>
-    </main>
+    </div>
+</main>
 
 <script>
     async function uploadPDF() {
@@ -188,3 +189,4 @@
 
 </body>
 </html>
+
