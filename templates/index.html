@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Antenci Zeka - AI PDF Analiz</title>
+    <title>Antenci Zeka - AI Analiz Merkezi</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #8b5cf6; /* ChatPDF Moru */
+            --primary: #8b5cf6;
             --bg-light: #f9fafb;
             --border: #e5e7eb;
             --text-main: #111827;
@@ -23,7 +23,6 @@
             color: var(--text-main);
         }
 
-        /* --- SIDEBAR --- */
         aside {
             width: 260px;
             background-color: var(--bg-light);
@@ -39,10 +38,8 @@
         .menu-item i { width: 20px; }
         .active-menu { background-color: white; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); color: var(--primary); }
 
-        /* --- MAIN CONTENT --- */
         main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 
-        /* Landing Page (Giriş Ekranı) */
         #landing { text-align: center; width: 100%; max-width: 800px; }
         .hero-title { font-size: 2.5rem; font-weight: 800; color: #1e3a8a; margin-bottom: 40px; }
         .hero-title span { color: var(--primary); }
@@ -64,7 +61,6 @@
         }
         .input-box textarea { border: none; outline: none; resize: none; height: 100px; font-size: 0.95rem; }
 
-        /* Chat View (Mesajlaşma Ekranı) - Gizli */
         #chat-view { display: none; width: 100%; height: 100%; flex-direction: column; background: white; }
         #chat-messages { flex: 1; overflow-y: auto; padding: 40px; display: flex; flex-direction: column; gap: 20px; }
         .msg { max-width: 70%; padding: 15px; border-radius: 12px; font-size: 0.95rem; line-height: 1.5; }
@@ -76,7 +72,6 @@
         
         #pdf-name-tag { position: absolute; top: 20px; right: 20px; background: #ecfdf5; color: #059669; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; display: none; z-index: 10; }
         
-        /* Model Selector Styling */
         .model-header {
             padding: 10px 20px; border-bottom: 1px solid var(--border); 
             display: flex; align-items: center; gap: 12px; background: #fff;
@@ -110,7 +105,7 @@
             <h1 class="hero-title" style="line-height: 1.2;">Bilginin Frekansını Yakala <br><span style="background: linear-gradient(90deg, #8b5cf6, #d8b4fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Doküman, Video ve Sunumların Akıllı Merkezi</span></h1>
             
             <div class="tab-container">
-                <div class="tab active" id="tab-chat" onclick="setMode('chat')"><i class="fas fa-comment"></i> Sohbet (PDF)</div>
+                <div class="tab active" id="tab-chat" onclick="setMode('chat')"><i class="fas fa-comment"></i> Sohbet</div>
                 <div class="tab" id="tab-video" onclick="setMode('video')"><i class="fas fa-play-circle"></i> Video Analiz</div>
                 <div class="tab" id="tab-slide" onclick="setMode('slide')"><i class="fas fa-file-powerpoint"></i> Slayt Oluştur</div>
                 <div class="tab" id="tab-research" onclick="setMode('research')"><i class="fas fa-microscope"></i> Araştırma</div>
@@ -119,13 +114,13 @@
             <div class="upload-grid" id="action-area">
                 <div class="upload-box" onclick="document.getElementById('pdfFile').click()">
                     <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
-                    <p>Bir PDF bırak ya da <strong>yükle</strong></p>
+                    <p>Bir PDF bırakın veya <strong>yükleyin</strong></p>
                     <input type="file" id="pdfFile" accept=".pdf" style="display:none" onchange="uploadPDF()">
                 </div>
                 <div class="input-box">
-                    <textarea id="directText" placeholder="| Merak ettiğin konuyu yaz, Antenci Zeka arasın..." onkeypress="if(event.key === 'Enter') { switchToChat(); send(); }"></textarea>
+                    <textarea id="directText" placeholder="| Merak ettiğiniz konuyu yazın..." onkeypress="if(event.key === 'Enter') { switchToChat(); send(); }"></textarea>
                     <div style="font-size: 0.7rem; color: #9ca3af; margin-top: 10px;">
-                        <span style="border: 1px solid #e5e7eb; padding: 2px 4px; border-radius: 4px;">Hızlı Başlat</span> için konuyu gir ve Enter'a bas.
+                        Konuyu girip Enter tuşuna basarak hızlıca başlayabilirsiniz.
                     </div>
                 </div>
             </div>
@@ -133,17 +128,17 @@
 
         <div id="chat-view">
             <div class="model-header">
-                <span style="font-size: 0.75rem; font-weight: bold; color: #6b7280; text-transform: uppercase;">Zeka Seçimi:</span>
+                <span style="font-size: 0.75rem; font-weight: bold; color: #6b7280; text-transform: uppercase;">Model Seçimi:</span>
                 <select id="modelSelect">
                     <option value="llama">Llama 3.3 (Groq)</option>
-                    <option value="gemini">Gemini 1.5 Flash</option>
+                    <option value="openrouter">Gemma 2 (OpenRouter)</option>
                 </select>
             </div>
             
             <div id="chat-messages"></div>
             
             <div class="bottom-input">
-                <input type="text" id="msgInput" placeholder="Mesajını buraya bırak kral..." onkeypress="if(event.key === 'Enter') send()">
+                <input type="text" id="msgInput" placeholder="Mesajınızı buraya yazın..." onkeypress="if(event.key === 'Enter') send()">
                 <button onclick="send()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: bold;">GÖNDER</button>
             </div>
         </div>
@@ -158,18 +153,18 @@
         formData.append('file', fileInput.files[0]);
 
         const tag = document.getElementById('pdf-name-tag');
-        tag.innerText = "⌛ Okunuyor...";
+        tag.innerText = "İşleniyor...";
         tag.style.display = "block";
 
         try {
             const res = await fetch('/upload', { method: 'POST', body: formData });
             const data = await res.json();
             if (data.durum === "basarili") {
-                tag.innerText = "📁 " + fileInput.files[0].name;
+                tag.innerText = "Dosya: " + fileInput.files[0].name;
                 switchToChat();
-                addMessage("bot", "PDF'i kaptım kral! Bu doküman hakkında ne bilmek istersin?");
+                addMessage("bot", "Doküman başarıyla yüklendi. İçeriği hakkında sorularınızı sorabilirsiniz.");
             }
-        } catch (e) { alert("Yükleme başarısız!"); }
+        } catch (e) { alert("Yükleme işlemi başarısız oldu."); }
     }
 
     function switchToChat() {
@@ -193,7 +188,7 @@
         input.value = '';
 
         const tempId = "bot-" + Date.now();
-        addMessage("bot", "Düşünüyorum...", tempId);
+        addMessage("bot", "Analiz ediliyor...", tempId);
 
         const selectedModel = document.getElementById('modelSelect').value;
 
@@ -208,7 +203,7 @@
             });
             const data = await res.json();
             document.getElementById(tempId).innerHTML = marked.parse(data.cevap);
-        } catch (e) { document.getElementById(tempId).innerText = "Hata oluştu kral."; }
+        } catch (e) { document.getElementById(tempId).innerText = "Bir hata oluştu."; }
     }
 
     function addMessage(role, text, id = null) {
